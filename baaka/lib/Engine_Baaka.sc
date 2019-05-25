@@ -1,5 +1,4 @@
 Engine_Baaka : CroneEngine {
-	var amp = 0;
 	var bEffects;
 	var <sModulate;
 	var <sNoise;

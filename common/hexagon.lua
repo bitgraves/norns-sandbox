@@ -20,11 +20,14 @@ function Hexagon:draw(msg, ccParamMapping)
   local angle = self.incAngle * -0.5
   for region = 1, 6 do
     local nextAngle = angle + self.incAngle
-    local val = params:get(ccParamMapping[self.ccIndex[region] ])
-    screen.move(self.center.x, self.center.y)
-    screen.arc(self.center.x, self.center.y, self.r * val, angle, nextAngle)
-    screen.close()
-    screen.stroke()
+    local paramName = ccParamMapping[self.ccIndex[region] ]
+    if paramName ~= nil and paramName ~= '' then
+      local val = params:get(paramName)
+      screen.move(self.center.x, self.center.y)
+      screen.arc(self.center.x, self.center.y, self.r * val, angle, nextAngle)
+      screen.close()
+      screen.stroke()
+    end
     angle = nextAngle
   end
   
