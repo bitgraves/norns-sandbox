@@ -22,12 +22,14 @@ Engine_Crystal : CroneEngine {
     	{ arg inBus, out, amp = 1, freqLpf = 20000, bend = 0;
     		var in = In.ar(inBus, 2);
 		    Out.ar(out,
-			    RLPF.ar(
-				    PitchShift.ar(
-					    in,
-					    pitchRatio: bend.midiratio,
-				    ),
-				    freqLpf, 0.998
+		      Pan2.ar(
+  			    RLPF.ar(
+  				    PitShift.ar(
+  					    in,
+  					    shift: bend.midiratio,
+  				    ),
+  				    freqLpf, 0.998
+  			    )
 			    )
 		    );
     	}
@@ -35,7 +37,7 @@ Engine_Crystal : CroneEngine {
 	  
   	SynthDef.new(\crystalMod,
 	    { arg inL, inR, out, glitch = 0, index = 0, gate = 1;
-	    	var in = [In.ar(inL), In.ar(inR)];
+	    	var in = Mix.ar([In.ar(inL), In.ar(inR)]);
 		    var offsetSeq = Diwhite(0, 1, inf);
 		    var glitchFreq = if(offsetSeq == 0, 5, 10 * glitch);
 		    var isOffset = Demand.kr(
@@ -43,16 +45,15 @@ Engine_Crystal : CroneEngine {
 	    		reset: 0,
 	    		demandUGens: offsetSeq,
 		    );
-		    var voice = PitchShift.ar(in, pitchRatio: (index + (12 * isOffset[0])).midiratio);
-		    // nested PitchShift is required because SC's PitchShift mysteriously limits ratio to 4.
-		    var harmonic = PitchShift.ar(voice, pitchRatio: ((12 + 7) * isOffset[1]).midiratio, mul: 0.5);
+		    var voice = PitShift.ar(in: in, shift: (index + (12 * isOffset[0])).midiratio);
+		    var harmonic = PitShift.ar(in: in, shift: ((index + 19) + (12 * isOffset[1])).midiratio) * 0.5;
 		    var note = Mix.ar([voice, harmonic]) *  EnvGen.kr(
 			    Env.adsr(3.0, 0, 1.0, 4.0),
 			    gate,
 			    levelScale: 0.7,
 			    doneAction: Done.freeSelf
 		    );
-		    Out.ar(out, [note].dup);
+		    Out.ar(out, note);
     	}
     ).add;
       	

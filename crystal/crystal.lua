@@ -5,7 +5,7 @@ local Hexagon = BGUtil.dofile_norns('common/hexagon.lua')
 
 engine.name = 'Crystal'
 local mix = 0
-local mid = nil
+mid = nil
 
 function init()
   audio:rev_off() -- no system reverb
@@ -49,7 +49,19 @@ end
 -- expose a couple params via enc for debugging
 function enc(nEnc, delta)
   if nEnc == 2 then
-    params:delta('mix', delta)
+    params:delta('monitor', delta)
+  elseif nEnc == 3 then
+    params:delta('bend', delta)
+  end
+end
+
+function key(n, z)
+  if n == 2 then
+    if z == 1 then
+      engine.noteOn(7)
+    else
+      engine.noteOff(7)
+    end
   end
 end
 
@@ -90,7 +102,6 @@ function midiEvent(data)
   local d = midi.to_msg(data)
   if d.type == 'note_on' then
     local note = d.note - 36
-    -- TODO
     engine.noteOn(note)
   elseif d.type == 'note_off' then
     local note = d.note - 36
