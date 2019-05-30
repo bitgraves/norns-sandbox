@@ -1,10 +1,6 @@
 PitShift {
-	// not used:
-	// var wrapLength = (maxDelayLengthSamp - 24) / s.sampleRate;
-	// var delayLengthBuffer = 12 / s.sampleRate;
-	// var halfLength = wrapLength / 2;
 	classvar delayLengthSamp = 5024;
-    *ar { arg in, shift;
+	*ar { arg in, shift;
 		var delayLength = delayLengthSamp / Server.default.sampleRate;
 		var halfLength = delayLength / 2;
 		var sweep = Sweep.ar(
