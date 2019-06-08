@@ -5,13 +5,13 @@ local Hexagon = BGUtil.dofile_norns('common/hexagon.lua')
 
 engine.name = 'Baaka'
 local mix = 0
-local mid = nil
+mid = nil
 
 function init()
   audio:rev_off() -- no system reverb
   audio:pitch_off() -- no system pitch analysis
 
-  params:add_control("amp", "amp", controlspec.new(0, 1, 'lin', 0, 0.5, ''))
+  params:add_control("amp", "amp", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("amp", function(x)
     engine.amp(x)
   end)
