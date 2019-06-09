@@ -102,6 +102,14 @@ function midiEvent(data)
   local d = midi.to_msg(data)
   if d.type == 'note_on' then
     local note = d.note - 36
+    if note == 0 then
+      engine.other(1)
+    end
+  elseif d.type == 'note_off' then
+    local note = d.note - 36
+    if note == 0 then
+      engine.other(0)
+    end
   elseif d.type == 'cc' then
     local handler = ccAkaiMapping[d.cc]
     if handler ~= nil and ccHandlers[handler] ~= nil then

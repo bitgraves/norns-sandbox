@@ -1,4 +1,5 @@
 Engine_Bounce : CroneEngine {
+  var <bounceLastAmp;
 	var <sHiTex;
 	var <sBounce;
 
@@ -74,11 +75,13 @@ Engine_Bounce : CroneEngine {
 			\out, context.out_b.index,
 			\amp, 1],
 		context.xg);
+	  bounceLastAmp = 1;
 
     // commands
 
 		this.addCommand("amp", "f", {|msg|
-		  sBounce.set(\amp, msg[1]);
+		  bounceLastAmp = msg[1];
+		  sBounce.set(\amp, bounceLastAmp);
 		});
     this.addCommand("hiTexAmp", "f", {|msg|
     	sHiTex.set(\amp, msg[1]);
@@ -92,6 +95,11 @@ Engine_Bounce : CroneEngine {
 		this.addCommand("lpf", "f", {|msg|
 			var newFreq = msg[1].linexp(0, 1, 100, 20000);
 		  sBounce.set(\lpfFreq, newFreq);
+		});
+		this.addCommand("other", "i", {|msg|
+		  var other = msg[1];
+  		sHiTex.set(\other, other);
+		  sBounce.set(\amp, bounceLastAmp * (1 - other));
 		});
 	}
 
