@@ -1,6 +1,6 @@
 Engine_Retina : CroneEngine {
   var bCarrier, bTrig, bDelay;
-  var <sChordShape, <sChordShapeOct, <sTrembler, <sTrig, <sDelay;
+  var <sChordShape, <sChordShapeOct, <sTrembler, <sTrig, <sDelay, <sMonitor;
   var <notes;
 
 	*new { arg context, doneCallback;
@@ -88,8 +88,29 @@ Engine_Retina : CroneEngine {
   			Out.ar(outBus, Pan2.ar(pitch * amp, 0));
   		}
   	).add;
+  	
+		SynthDef.new(\retMonitor,
+  		{ arg inBus = 2, outBus = 0, sidechainBus = 2, amp = 0;
+  			var in = In.ar(inBus, 1);
+  			var sidechain = In.ar(sidechainBus, 1);
+  			var duck = Compander.ar(
+  				in,
+  				sidechain,
+  				thresh: 0.025,
+  				slopeAbove: 0.4,
+  				clampTime: 0.005,
+  				relaxTime: 0.01,
+  			);
+  			Out.ar(outBus, Pan2.ar(duck, 0) * amp);
+  		}
+  	).add;
       	
     context.server.sync;
+    
+  	sMonitor = Synth.new(\retMonitor, [
+	  	\sidechainBus, bDelay,
+	  	\outBus, context.out_b.index],
+	  context.xg);
     
   	sTrig = Synth.new(\retTrig, [
   		\outBus, bTrig],
@@ -161,12 +182,16 @@ Engine_Retina : CroneEngine {
     this.addCommand("destroy", "f", {|msg|
 		  sTrembler.set(\destroy, msg[1]);
 		});
+		this.addCommand("sidechainMonitor", "f", {|msg|
+		  sMonitor.set(\amp, msg[1]);
+		});
 	}
 
 	free {
     sTrembler.free;
     sTrig.free;
     sDelay.free;
+    sMonitor.free;
 	}
 
 } 

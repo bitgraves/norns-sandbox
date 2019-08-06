@@ -1,4 +1,5 @@
 -- retina
+-- note: uses custom monitor synth
 
 local BGUtil = dofile(_path.code .. 'bitgraves/common/bgutil.lua')
 local Hexagon = BGUtil.dofile_norns('common/hexagon.lua')
@@ -30,6 +31,11 @@ function init()
   params:set_action("destroy", function(x)
     engine.destroy(util.linlin(0, 1, 125.0 / 127.0, 0, x))
   end)
+  
+  params:add_control("sidechainMonitor", "sidechainMonitor", controlspec.new(0, 1, 'lin', 0, 0, ''))
+  params:set_action("sidechainMonitor", function(x)
+    engine.sidechainMonitor(x)
+  end)
 
   params:add_control("monitor", "monitor", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("monitor", function(x)
@@ -60,8 +66,9 @@ local ccAkaiMapping = {
   [3] = 'speed',
   [9] = 'delayAmp',
   [13] = 'destroy',
-  [14] = 'monitor',
+  [14] = 'sidechainMonitor', -- custom monitor synth
   [15] = 'amp',
+  [20] = 'monitor', -- standard monitor on nonstandard knob
 }
 
 local ccHandlers = {
@@ -76,6 +83,10 @@ local ccHandlers = {
   ['destroy'] = function(val)
       params:set('destroy', val)
       return 'destroy ' .. val
+    end,
+  ['sidechainMonitor'] = function(val)
+      params:set('sidechainMonitor', val)
+      return 'minitaur ' .. val
     end,
   ['monitor'] = function(val)
       params:set('monitor', val)
