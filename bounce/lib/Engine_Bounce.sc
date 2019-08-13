@@ -44,10 +44,10 @@ Engine_Bounce : CroneEngine {
           Diwhite.new(1, 5) * sweepVel
         );
         var env = EnvGen.kr(
-          Env.perc(0.05, 0.1),
-          Impulse.kr(8),
-          levelBias: 2.0 - (bounce * 2.0),
-        );
+          Env.perc(0.05, 0.08),
+          Impulse.kr(9),
+          levelBias: 1 - bounce,
+        ).clip(0, 1);
         var fs = FreqShift.ar(
           Mix.ar([in, voice, sub]),
           Sweep.ar(
