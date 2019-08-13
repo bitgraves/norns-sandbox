@@ -10,6 +10,7 @@ mid = nil
 function init()
   audio:rev_off() -- no system reverb
   audio:pitch_off() -- no system pitch analysis
+  audio:monitor_mono() -- expect only channel 1 input
 
   params:add_control("amp", "amp", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("amp", function(x)
@@ -63,6 +64,10 @@ function enc(nEnc, delta)
   elseif nEnc == 3 then
     params:delta('noiseFreq', delta)
   end
+end
+
+function key(...)
+  BGUtil.setlist_key('baaka/baaka', ...)
 end
 
 -- mapping from Akai MPD218 knobs to param handlers

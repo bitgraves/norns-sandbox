@@ -61,6 +61,10 @@ function enc(nEnc, delta)
   end
 end
 
+function key(...)
+  BGUtil.setlist_key('retina/retina', ...)
+end
+
 -- mapping from Akai MPD218 knobs to param handlers
 local ccAkaiMapping = {
   [3] = 'speed',

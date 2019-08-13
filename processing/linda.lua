@@ -62,6 +62,10 @@ local ccAkaiMapping = {
   [15] = 'amp',
 }
 
+function key(...)
+  BGUtil.setlist_key('processing/linda', ...)
+end
+
 local ccHandlers = {
   ['noteOffset'] = function(val)
       params:set('noteOffset', val)

@@ -4,12 +4,13 @@ local BGUtil = dofile(_path.code .. 'bitgraves/common/bgutil.lua')
 local Hexagon = BGUtil.dofile_norns('common/hexagon.lua')
 
 engine.name = 'Bounce'
-local mix = 0
+local isOther = 0
 mid = nil
 
 function init()
   audio:rev_off() -- no system reverb
   audio:pitch_off() -- no system pitch analysis
+  audio:monitor_mono() -- expect only channel 1 input
 
   params:add_control("amp", "amp", controlspec.new(0, 1, 'lin', 0, 1, ''))
   params:set_action("amp", function(x)
@@ -60,6 +61,10 @@ function enc(nEnc, delta)
   end
 end
 
+function key(...)
+  BGUtil.setlist_key('bounce/bounce', ...)
+end
+
 -- mapping from Akai MPD218 knobs to param handlers
 local ccAkaiMapping = {
   [3] = 'hiTexAmp',
@@ -104,11 +109,15 @@ function midiEvent(data)
     local note = d.note - 36
     if note == 0 then
       engine.other(1)
+      isOther = 1
+      redraw('')
     end
   elseif d.type == 'note_off' then
     local note = d.note - 36
     if note == 0 then
       engine.other(0)
+      isOther = 0
+      redraw('')
     end
   elseif d.type == 'cc' then
     local handler = ccAkaiMapping[d.cc]
@@ -120,5 +129,13 @@ function midiEvent(data)
 end
 
 function redraw(msg)
-  Hexagon:draw(msg, ccAkaiMapping)
+  if isOther == 1 then
+    screen.clear()
+    screen.level(12)
+    screen.move(48, 32)
+    screen.text('???????')
+    screen.update()
+  else
+    Hexagon:draw(msg, ccAkaiMapping)
+  end
 end
