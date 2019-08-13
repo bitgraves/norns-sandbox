@@ -12,7 +12,7 @@ This repo contains software for [norns](https://monome.org/norns/) written by [b
 ## Installation
 
 - Clone this repo anywhere under `dust/code` on your norns.
-- In our case, the final path is `/home/we/dust/code/bitgraves`. If you clone to some other path, you might need to adjust the include path on [this line](https://github.com/bitgraves/norns-sandbox/blob/master/common/bgutil.lua#L8).
+- In our case, the final path is `/home/we/dust/code/bitgraves`. If you clone to some other path, you might need to adjust the include path on [this line](https://github.com/bitgraves/norns-sandbox/blob/master/common/bgutil.lua#L36).
 - Restart the audio engine on the norns.
 
 ## MIDI
