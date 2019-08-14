@@ -47,11 +47,6 @@ function init()
   redraw()
 end
 
-function cleanup()
-  mid.event = nil
-  midi.cleanup()
-end
-
 -- expose a couple params via enc for debugging
 function enc(nEnc, delta)
   if nEnc == 2 then

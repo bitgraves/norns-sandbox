@@ -25,7 +25,7 @@ local function _findIndexInSetlist(fromPatchName)
   return currentIndex
 end
 
-local function _loadScriptAtPlaylistIndex(index)
+local function _loadScriptAtSetlistIndex(index)
   local name = setlist[index]
   Script.load(_path.code .. 'bitgraves/' .. name .. '.lua')
 end
@@ -58,7 +58,7 @@ function BGUtil.setlist_prev(fromPatchName)
     else
       prevIndex = currentIndex - 1
     end
-    _loadScriptAtPlaylistIndex(prevIndex)
+    _loadScriptAtSetlistIndex(prevIndex)
   end
 end
 
@@ -73,7 +73,7 @@ function BGUtil.setlist_next(fromPatchName)
     else
       nextIndex = currentIndex + 1
     end
-    _loadScriptAtPlaylistIndex(nextIndex)
+    _loadScriptAtSetlistIndex(nextIndex)
   end
 end
 

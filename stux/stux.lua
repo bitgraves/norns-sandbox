@@ -46,11 +46,6 @@ function init()
   redraw()
 end
 
-function cleanup()
-  mid.event = nil
-  midi.cleanup()
-end
-
 function enc(nEnc, delta)
   if nEnc == 2 then
     params:delta('percAmp', delta)
