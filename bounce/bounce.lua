@@ -106,6 +106,10 @@ function midiEvent(data)
       engine.other(1)
       isOther = 1
       redraw('')
+    else
+      engine.drift(note / 16)
+      engine.driftTrig(1)
+      redraw('sweep trig ' .. note / 16)
     end
   elseif d.type == 'note_off' then
     local note = d.note - 36
@@ -113,6 +117,9 @@ function midiEvent(data)
       engine.other(0)
       isOther = 0
       redraw('')
+    else
+      engine.driftTrig(0)
+      redraw('stop sweep')
     end
   elseif d.type == 'cc' then
     local handler = ccAkaiMapping[d.cc]

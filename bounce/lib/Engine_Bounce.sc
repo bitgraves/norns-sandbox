@@ -1,5 +1,5 @@
 Engine_Bounce : CroneEngine {
-  var <bounceLastAmp;
+  var <bounceLastAmp, <other;
   var <sHiTex;
   var <sBounce;
 
@@ -9,6 +9,8 @@ Engine_Bounce : CroneEngine {
 
   alloc {
     "Bounce alloc".postln;
+    other = 0;
+    bounceLastAmp = 0;
 
     SynthDef.new(\bounceHiTex,
       { arg inL, inR, out, amp = 1, other = 0;
@@ -32,20 +34,20 @@ Engine_Bounce : CroneEngine {
     ).add;
     
     SynthDef.new(\bounceLead,
-      { arg inL, inR, out, amp = 1, bounce = 0, drift = 0, lpfFreq = 100;
-        var in = [In.ar(inL), In.ar(inR)];
+      { arg inL, inR, out, amp = 0, bounce = 0, drift = 0, lpfFreq = 100, inTrig = 0;
+        var in = [In.ar(inL), In.ar(inR)]; // there is a deliberate bug here passing in 2 channels to PitShift
         var voice = PitShift.ar(in, 2.0);
         var sub = PitShift.ar(in, 0.5);
         var sweepVel = 200 * drift;
-        var sweepTrig = Dust.kr(2);
+        var sweepTrig = inTrig + Dust.kr(2);
         var sweepRate = Demand.kr(
           sweepTrig,
           0,
           Diwhite.new(1, 5) * sweepVel
         );
         var env = EnvGen.kr(
-          Env.perc(0.05, 0.08),
-          Impulse.kr(9),
+          Env.perc(0.05, 0.05),
+          Impulse.kr(10),
           levelBias: 1 - bounce,
         ).clip(0, 1);
         var fs = FreqShift.ar(
@@ -81,7 +83,7 @@ Engine_Bounce : CroneEngine {
 
     this.addCommand("amp", "f", {|msg|
       bounceLastAmp = msg[1];
-      sBounce.set(\amp, bounceLastAmp);
+      sBounce.set(\amp, bounceLastAmp * (1 - other));
     });
     this.addCommand("hiTexAmp", "f", {|msg|
       sHiTex.set(\amp, msg[1]);
@@ -92,12 +94,15 @@ Engine_Bounce : CroneEngine {
     this.addCommand("drift", "f", {|msg|
       sBounce.set(\drift, msg[1]);
     });
+    this.addCommand("driftTrig", "i", {|msg|
+      sBounce.set(\inTrig, msg[1]);
+    });
     this.addCommand("lpf", "f", {|msg|
       var newFreq = msg[1].linexp(0, 1, 100, 20000);
       sBounce.set(\lpfFreq, newFreq);
     });
     this.addCommand("other", "i", {|msg|
-      var other = msg[1];
+      other = msg[1];
       sHiTex.set(\other, other);
       sBounce.set(\amp, bounceLastAmp * (1 - other));
     });
