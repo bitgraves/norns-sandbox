@@ -3,7 +3,7 @@
 local BGUtil = dofile(_path.code .. 'bitgraves/common/bgutil.lua')
 local Hexagon = BGUtil.dofile_norns('common/hexagon.lua')
 
-engine.name = 'Processing'
+engine.name = 'Linda'
 mid = nil
 
 function init()

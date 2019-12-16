@@ -1,7 +1,7 @@
 Engine_Processing : CroneEngine {
-  var gBaseGrainFreq, gBaseImpulseDuration, gBaseFilterResonanceFreq, gDetuneRange;
-  var bEffects, bNoteOffset, bFilterRadius, bFilterCreep, bFilterRand, bMasterGate;
-  var <sEffects, <sModulateFilter, <sMasterGate;
+  var gBaseGrainFreq, gBaseImpulseDuration, gBaseFilterResonanceFreq, gDetuneRange, gIsMonotonic, gPShudder, gTriadVel;
+  var bEffects, bNoteOffset, bFilterRadius, bMasterGate;
+  var <sEffects, <rMasterGate;
 
   *new { arg context, doneCallback;
     ^super.new(context, doneCallback);
@@ -10,49 +10,46 @@ Engine_Processing : CroneEngine {
   alloc {
     "Processing alloc".postln;
     
-    gBaseGrainFreq = 293.66 / 4.0; // TODO: taken from linda patch
+    gBaseGrainFreq = 55;
     gBaseImpulseDuration = 1.0 / gBaseGrainFreq;
-    gBaseFilterResonanceFreq = 293.66;
-    gDetuneRange = 0.08;
+    gBaseFilterResonanceFreq = 440;
+    gDetuneRange = 0;
+    gIsMonotonic = 0;
+    gPShudder = 0;
+    gTriadVel = 0;
     
     bEffects = Bus.audio(context.server, 2);
     bNoteOffset = Bus.control(context.server, 1);
     bFilterRadius = Bus.control(context.server, 1);
-    bFilterCreep = Bus.control(context.server, 1);
-    bFilterRand = Bus.control(context.server, 1);
     bMasterGate = Bus.control(context.server, 1);
-    bNoteOffset.set(-4);
-    bFilterRadius.set(0.999); // max (0.996-0.999)
-    bFilterCreep.set(0);
-    bFilterRand.set(0);
+    bNoteOffset.set(0);
+    bMasterGate.set(1);
+    bFilterRadius.set(0.999);
 
     context.server.sync;
     
     // master gate
-    SynthDef.new(\procMasterGate,
-      { arg outBus, shudderDuration = 0.1;
-        var gateFreq = 1.0 / (0.015 + shudderDuration);
-        var gate = LFPulse.kr(
-          freq: gateFreq,
-          width: shudderDuration * gateFreq,
-          mul: 2.0,
-          add: -1.0
-        );
-        Out.kr(outBus, gate);
+    rMasterGate = Routine.new(
+      {
+        loop {
+          var pDuck = gPShudder * 0.6;
+          if (1.0.rand < pDuck, {
+            bMasterGate.set(0);
+            0.015.wait;
+            bMasterGate.set(1);
+          }, nil);
+          if (gPShudder > 0.7, {
+            (0.03 + 0.07.rand).wait;
+          }, {
+            0.1.wait;
+          });
+        }
       }
-    ).add;
-    
-    // modulate filter from master gate
-    sModulateFilter = SynthDef.new(\procModulateFilter,
-      { arg inGateBus, outFilterBus;
-        var inGate = In.kr(inGateBus);
-        Out.kr(outFilterBus, TRand.kr(0, 0.1, inGate));
-      }
-    ).add;
+    ).play;
     
     // effects bus
     SynthDef.new(\procEffects,
-      { arg inBus, inGateBus, out, amp = 1;
+      { arg outBus = 0, inBus = 2, gateBus = 0, amp = 1;
         var input = In.ar(inBus, 2);
         var dyno = Compander.ar(
           input,
@@ -63,19 +60,19 @@ Engine_Processing : CroneEngine {
           relaxTime: 0.3
         );
         var env = dyno * EnvGen.kr(
-          Env.asr(0.05, 1, 0.015),
-          gate: In.kr(inGateBus),
+          Env.asr(0.2, 1, 0.015),
+          gate: In.kr(gateBus),
         );
-        Out.ar(out, env * amp);
+        Out.ar(outBus, env * amp);
       }
     ).add;
     
     SynthDef.new(\procFilterGroup,
-      { arg out, inL, inR, noteIndex = 0, noteOffset = 0, filterCreep = 0, filterRand = 0, grainFreq, detuneRange, filterRadius;
+      { arg outBus = 0, inL, inR, gate = 1, noteIndex = 0, noteOffset = 0, grainFreq, detuneRange, filterRadius, isMonotonic, velocity = 1;
         var buf = Buffer.alloc(context.server, context.server.sampleRate * gBaseImpulseDuration, 2);
-        var inBus = In.ar(inL).dup;
+        var in = In.ar(inL).dup;
         var recorder = RecordBuf.ar(
-          inBus, buf,
+          in, buf,
           loop: 0,
         );
         var playbuf = PlayBuf.ar(
@@ -87,9 +84,10 @@ Engine_Processing : CroneEngine {
             var detune = if(index > 0, Rand(-1.0 * detuneRange, detuneRange), 0);
             var freq = (
               gBaseFilterResonanceFreq *
-              (2 + filterCreep + filterRand).pow((noteIndex + noteOffset) / 12) *
+              2.pow((noteIndex + noteOffset) / 12) *
               (1.0 + detune)
             );
+            freq = if(isMonotonic, RunningMax.kr(freq), freq);
             DelayL.ar(
               // Resonz.ar with bwr of 0.025 also worked ok
               SOS.ar(
@@ -97,7 +95,7 @@ Engine_Processing : CroneEngine {
                 a0: 1, a1: 0, a2: -1,
                 b2: filterRadius.squared.neg,
                 b1: 2.0 * filterRadius * cos(2pi * freq / context.server.sampleRate),
-                mul: 0.015 * (1.0 - (index * 0.1)),
+                mul: 0.015 * (1.0 - (index * 0.1)) * velocity,
               ),
               delaytime: (30 * detune.abs) / 1000,
               maxdelaytime: 30 / 1000,
@@ -106,67 +104,60 @@ Engine_Processing : CroneEngine {
           0
         );
         var env = filterBuf * EnvGen.kr(
-          Env.adsr(3.0, 0.2, 0.9, 8.0),
+          Env.adsr(0.01, 0.2, 0.9, if(isMonotonic, 10.0, 8.0)),
           gate: Trig.kr(1.0, 3.0),
           doneAction: Done.freeSelf
         );
-        Out.ar(out, Pan2.ar(env));
+        Out.ar(outBus, Pan2.ar(env));
       }
     ).add;
         
     context.server.sync;
     
-    sMasterGate = Synth.new(\procMasterGate, [
-      \outBus, bMasterGate],
-    context.xg);
-    
-    sModulateFilter = Synth.new(\procModulateFilter, [
-      \inGateBus, bMasterGate,
-      \outFilterBus, bFilterRand],
-    context.xg);
-
     sEffects = Synth.new(\procEffects, [
       \inBus, bEffects,
-      \inGateBus, bMasterGate,
+      \gateBus, bMasterGate,
       \out, context.out_b.index,
       \amp, 1],
     context.xg);
 
     // commands
 
-    this.addCommand("noteOn", "i", {|msg|
+    this.addCommand("noteOn", "if", {|msg|
       var index = msg[1];
       var note = Synth.new(\procFilterGroup, [
         \inL, context.in_b[0].index,
         \inR, context.in_b[1].index,
-        \out, bEffects,
+        \outBus, bEffects,
         \grainFreq, gBaseGrainFreq,
         \detuneRange, gDetuneRange,
+        \isMonotonic, gIsMonotonic,
+        \velocity, msg[2],
         \noteIndex, index],
       context.xg);
       note.map(\noteOffset, bNoteOffset);
-      note.map(\filterCreep, bFilterCreep);
-      note.map(\filterRand, bFilterRand);
       note.map(\filterRadius, bFilterRadius);
     });
     this.addCommand("amp", "f", {|msg|
       sEffects.set(\amp, msg[1]);
     });
     this.addCommand("noteOffset", "f", {|msg|
-      bNoteOffset.set(msg[1].linlin(0, 1, -4, -24).round);
+      bNoteOffset.set(msg[1].linlin(0, 1, 0, -24).round);
     });
-    this.addCommand("filterCreep", "f", {|msg|
-      bFilterCreep.set(msg[1]);
+    this.addCommand("pShudder", "f", {|msg|
+      gPShudder = msg[1];
     });
-    this.addCommand("shudderDuration", "f", {|msg|
-      sMasterGate.set(\shudderDuration, msg[1].linlin(0, 1, 0.1, 0.01));
+    this.addCommand("detune", "f", {|msg|
+      gDetuneRange = msg[1].linlin(0, 1, 0.0006, 0.08);
+    });
+    this.addCommand("monotonic", "i", {|msg|
+      gIsMonotonic = msg[1];
     });
   }
 
   free {
     sEffects.free;
-    sModulateFilter.free;
-    sMasterGate.free;
+    rMasterGate.free;
   }
 
 } 
