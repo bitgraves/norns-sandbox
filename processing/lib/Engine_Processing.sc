@@ -1,5 +1,5 @@
 Engine_Processing : CroneEngine {
-  var gBaseGrainFreq, gBaseImpulseDuration, gBaseFilterResonanceFreq, gDetuneRange, gIsMonotonic, gPShudder, gTriadVel;
+  var gBaseGrainFreq, gBaseImpulseDuration, gBaseFilterResonanceFreq, gDetuneRange, gIsMonotonic, gPShudder;
   var bEffects, bNoteOffset, bFilterRadius, bMasterGate;
   var <sEffects, <rMasterGate;
 
@@ -16,8 +16,7 @@ Engine_Processing : CroneEngine {
     gDetuneRange = 0;
     gIsMonotonic = 0;
     gPShudder = 0;
-    gTriadVel = 0;
-    
+
     bEffects = Bus.audio(context.server, 2);
     bNoteOffset = Bus.control(context.server, 1);
     bFilterRadius = Bus.control(context.server, 1);
@@ -95,7 +94,7 @@ Engine_Processing : CroneEngine {
                 a0: 1, a1: 0, a2: -1,
                 b2: filterRadius.squared.neg,
                 b1: 2.0 * filterRadius * cos(2pi * freq / context.server.sampleRate),
-                mul: 0.015 * (1.0 - (index * 0.1)) * velocity,
+                mul: 0.008 * (1.0 - (index * 0.1)) * velocity,
               ),
               delaytime: (30 * detune.abs) / 1000,
               maxdelaytime: 30 / 1000,

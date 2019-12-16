@@ -1,4 +1,4 @@
--- linda - WIP
+-- processing chamber
 
 local BGUtil = dofile(_path.code .. 'bitgraves/common/bgutil.lua')
 local Hexagon = BGUtil.dofile_norns('common/hexagon.lua')
