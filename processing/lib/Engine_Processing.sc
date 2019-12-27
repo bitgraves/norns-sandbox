@@ -10,7 +10,7 @@ Engine_Processing : CroneEngine {
   alloc {
     "Processing alloc".postln;
     
-    gBaseGrainFreq = 55;
+    gBaseGrainFreq = 55; // WARNING: do not set this near zero
     gBaseImpulseDuration = 1.0 / gBaseGrainFreq;
     gBaseFilterResonanceFreq = 440;
     gDetuneRange = 0;
@@ -50,9 +50,11 @@ Engine_Processing : CroneEngine {
     SynthDef.new(\procEffects,
       { arg outBus = 0, inBus = 2, gateBus = 0, amp = 1;
         var input = In.ar(inBus, 2);
+        // filter prevents unstable resonance on lower pads
+        var filter = BRF.ar(input, gBaseGrainFreq * 2, rq: 0.8);
         var dyno = Compander.ar(
-          input,
-          input,
+          filter,
+          filter,
           thresh: 0.5,
           slopeAbove: 0.1,
           clampTime: 0.05,
