@@ -26,7 +26,7 @@ Engine_Super : CroneEngine {
   
     SynthDef.new(\spFormant,
       { arg inL, inR, outBus = 0, amp = 0, mul = 1, fundfreq = 440, formfreq = 400, bwmul = 2;
-        var in = [In.ar(inL), In.ar(inR)];
+        var in = In.ar(inL); // [In.ar(inL), In.ar(inR)];
         var fs = FreqShift.ar(
           in,
           freq: Formant.ar(
@@ -42,7 +42,7 @@ Engine_Super : CroneEngine {
   
     SynthDef.new(\spSub,
       { arg inL, inR, outBus = 0, amp = 1, gateBus = 0, duckAmount = 1;
-        var in = [In.ar(inL), In.ar(inR)];
+        var in = In.ar(inL); // [In.ar(inL), In.ar(inR)];
         var gate = In.kr(gateBus, 1);
         var mix = Mix.ar([
           in,
@@ -75,10 +75,11 @@ Engine_Super : CroneEngine {
       { arg inBus = 2, outBus = 0, amp = 1, gateBus = 0, freq = 0, duckRelease = 2.2;
         var in = In.ar(inBus, 1);
         var gate = In.kr(gateBus, 1);
-        // var trig = Impulse.kr(freq);
+        // modulate all trig values by a very slow LFO
+        var trigLfoMod =  SinOsc.kr(1.0 / 30.0, 0, 0.1, 1);
         var trig = Impulse.kr(
           freq: SinOsc.kr(
-            freq: Demand.kr(Dust.kr(1), 0, Drand.new([0.1, 0.2, 0.5, 0.8, 1], inf)),
+            freq: Demand.kr(Dust.kr(1), 0, Drand.new([0.1, 0.2, 0.5, 0.8, 1], inf)) * trigLfoMod,
             mul: 6,
             add: 8
           )
