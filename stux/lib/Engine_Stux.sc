@@ -45,7 +45,7 @@ Engine_Stux : CroneEngine {
     ).add;
   
     SynthDef.new(\stxPoly,
-      { arg inBus = 2, outBus = 0, amp = 0, percAmp = 1, trig = 0, attack = 0.01, release = 0.5, note = 0, fine = 0, rhythm = 0;
+      { arg inBus = 2, outBus = 0, amp = 0, percAmp = 1, trig = 0, attack = 0.01, release = 0.01, note = 0, fine = 0, rhythm = 0;
         var in = In.ar(inBus, 1);
         var envGate = Impulse.kr(Demand.kr(Dust.kr(2) + trig, 0, Diwhite.new(0, rhythm)));
         var allTrig = envGate + trig;

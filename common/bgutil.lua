@@ -31,6 +31,7 @@ local function _loadScriptAtSetlistIndex(index)
 end
 
 function BGUtil.dofile_norns(filepath)
+  -- Dec 2020: seems no longer needed.
   -- use dofile because we can provide an absolute path.
   -- _path is defined in os.getenv('HOME') .. norns/lua/core/config.lua
   return dofile(_path.code .. 'bitgraves/' .. filepath)

@@ -55,7 +55,7 @@ Engine_Truths : CroneEngine {
   
     SynthDef.new(\pgFilter,
       { arg inBus = 2, outBus = 0, modBus = 2, gateBus = 0, amp = 0;
-        var freq, hasFreq, sound, ampEnv;
+        var freq, hasFreq, sound, dyno, pan, ampEnv;
         var in = In.ar(inBus, 1);
         var mod = In.ar(modBus, 1);
         var gate = In.kr(gateBus, 1);
@@ -71,7 +71,28 @@ Engine_Truths : CroneEngine {
         // 2, 3, 4, 7, 11
         sound = Mix.ar(Ringz.ar(in, freq * [2, 3, h1, h2, h3], 0.5, 0.003));
         // sound = FBSineC.ar(freq * 4, LFNoise2.kr(1, 3, 2), 0.5, 1.005, 0.7);
-        Out.ar(outBus, Pan2.ar(sound, 0) * amp);
+
+         // because of the resonant nature of Ringz and frequent changes in
+         // freq, the signal can sometimes pass rapidly through much louder sounds,
+         // so compress the signal a bit to smooth that out
+         dyno = Compander.ar(
+                 sound,
+                 sound,
+                 thresh: 0.5,
+                 slopeAbove: 0.2,
+                 clampTime: 0.005,
+                 relaxTime: 0.3
+         );
+         dyno = [
+                 dyno,
+                 DelayC.ar(dyno, 0.02, 0.02)
+         ];
+         pan = Pan2.ar(
+                 dyno,
+                 0 // Demand.kr(Changed.kr(freq, 10), 0, Dwhite.new(-0.5, 0.5))
+         );
+  
+         Out.ar(outBus, pan * amp);
       }
     ).add;
         

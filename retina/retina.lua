@@ -1,8 +1,8 @@
 -- retina
 -- note: uses custom monitor synth
 
-local BGUtil = dofile(_path.code .. 'bitgraves/common/bgutil.lua')
-local Hexagon = BGUtil.dofile_norns('common/hexagon.lua')
+local BGUtil = include('bitgraves/common/bgutil')
+local Hexagon = include('bitgraves/common/hexagon')
 
 engine.name = 'Retina'
 mid = nil

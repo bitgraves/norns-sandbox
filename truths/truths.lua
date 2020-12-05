@@ -1,10 +1,12 @@
 -- truths
 
-local BGUtil = dofile(_path.code .. 'bitgraves/common/bgutil.lua')
-local Hexagon = BGUtil.dofile_norns('common/hexagon.lua')
+local BGUtil = include('bitgraves/common/bgutil')
+local Hexagon = include('bitgraves/common/hexagon')
 
 engine.name = 'Truths'
 mid = nil
+
+local indexOffset = 2
 
 function init()
   audio:rev_off() -- no system reverb
@@ -59,6 +61,7 @@ local ccAkaiMapping = {
   [13] = 'sustain',
   [14] = 'monitor',
   [15] = 'amp',
+  [16] = 'padOffset',
 }
 
 local ccHandlers = {
@@ -86,6 +89,10 @@ local ccHandlers = {
     params:set('amp', val)
     return 'amp ' .. val
   end,
+  ['padOffset'] = function(val)
+    indexOffset = math.floor(util.linlin(0, 1, 0, 12, val))
+    return 'pad offset ' .. indexOffset
+  end,
 }
 
 function midiEvent(data)
@@ -93,9 +100,10 @@ function midiEvent(data)
   local d = midi.to_msg(data)
   if d.type == 'note_on' then
     local index = d.note - 36
-    engine.noteOn(index)
+    engine.noteOn(index + indexOffset)
   elseif d.type == 'note_off' then
-    engine.noteOff(index)
+    local index = d.note - 36
+    engine.noteOff(index + indexOffset)
   elseif d.type == 'cc' then
     local handler = ccAkaiMapping[d.cc]
     if handler ~= nil and ccHandlers[handler] ~= nil then
