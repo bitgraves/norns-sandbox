@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # norns maiden makes it difficult to tell whether spaces and tabs are consistent.
 # run this to convert all .sc and .lua files to 2-space indentation.
