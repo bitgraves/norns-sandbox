@@ -63,6 +63,11 @@ function init()
   redraw()
 end
 
+osc.event = function(path, args, from)
+  print('rec osc: ' .. tostring(path))
+  print(' from: ' .. tostring(from.host) .. ':' .. tostring(from.port))
+end
+
 function key(...)
   BGUtil.setlist_key('lighthouse/lighthouse', ...)
 end

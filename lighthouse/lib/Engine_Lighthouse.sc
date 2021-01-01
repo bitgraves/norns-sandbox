@@ -1,10 +1,13 @@
 Engine_Lighthouse : CroneEngine {
   var bModulator, bTrig, bPerc;
   var <sModulator, <sFilter, <sPerc;
+  var <pKick, <pClick, <pClap, <pVowel;
 
   var seq;
   var gKickGain = 0, gClickGain = 0, gClapGain = 0;
   var tPercClock;
+  
+  var gOscOut;
 
   *new { arg context, doneCallback;
     ^super.new(context, doneCallback);
@@ -12,6 +15,8 @@ Engine_Lighthouse : CroneEngine {
 
   alloc {
     "Lighthouse alloc".postln;
+    
+    gOscOut = NetAddr.new("127.0.0.1", 4242);
 
     bModulator = Bus.audio(context.server, 1);
     bTrig = Bus.control(context.server, 1);
@@ -37,7 +42,7 @@ Engine_Lighthouse : CroneEngine {
       ], [0.1, 0.9]),
       inf
     ).asStream;
-    Routine.new({
+    pVowel = Routine.new({
       loop {
         var param = seq.next * 0.05;
         sModulator.set(\vowelOffset, param);
@@ -98,7 +103,7 @@ Engine_Lighthouse : CroneEngine {
     ).add;
     
     // rhythmic pattern
-    Pbind(
+    pKick = Pbind(
       \instrument, \bgfBump,
       \outBus, bPerc,
       \outTrigBus, bTrig,
@@ -114,8 +119,14 @@ Engine_Lighthouse : CroneEngine {
         ], [7, 3, 1].normalizeSum),
         inf
       ) * Pfunc({ gKickGain }),
+      \oscOut, Pn(
+        Pfunc({
+          gOscOut.sendMsg("/bump");
+          1
+        })
+      ),
     ).play(tPercClock);
-    Pbind(
+    pClick = Pbind(
       \instrument, \bgfScatter,
       \outBus, bPerc,
       \dur, Pn(
@@ -138,7 +149,7 @@ Engine_Lighthouse : CroneEngine {
         Pwrand([10000, 8000], [0.9, 0.1])
       ),
     ).play(tPercClock);
-    Pbind(
+    pClap = Pbind(
       \instrument, \bgfSnr,
       \outBus, bPerc,
       \release, Pn(
@@ -231,8 +242,8 @@ Engine_Lighthouse : CroneEngine {
     
     sPerc = Synth.new(\bgfPerc, [
       \inBus, bPerc,
-      \outBus, 0]
-    );
+      \outBus, context.out_b.index],
+    context.xg);
     sFilter = Synth.new(\bgfFilter, [
       \modBus, bModulator,
       \gateBus, bTrig,
@@ -286,6 +297,10 @@ Engine_Lighthouse : CroneEngine {
     sModulator.free;
     sFilter.free;
     sPerc.free;
+    pKick.stop;
+    pClick.stop;
+    pClap.stop;
+    pVowel.stop;
   }
 
 } 
