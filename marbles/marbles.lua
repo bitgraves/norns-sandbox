@@ -11,6 +11,7 @@ function init()
   audio:rev_off() -- no system reverb
   audio:pitch_off() -- no system pitch analysis
   audio:monitor_mono() -- expect only channel 1 input
+  audio.level_monitor(0) -- just reset for now...
   
   params:add_control("lowMonitor", "lowMonitor", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("lowMonitor", function(x)
@@ -58,8 +59,8 @@ params:add_control("spread", "spread", controlspec.new(1, 5, 'lin', 1, 1, ''))
   redraw()
 end
 
-function enc(nEnc, delta)
-
+function key(...)
+  BGUtil.setlist_key('marbles/marbles', ...)
 end
 
 -- mapping from Akai MPD218 knobs to param handlers

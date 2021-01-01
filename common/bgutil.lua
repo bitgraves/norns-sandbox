@@ -5,13 +5,9 @@ local Script = require 'script'
 BGUtil = {}
 
 local setlist = {
-  'stux/stux',
-  'super/super',
-  'baaka/baaka',
-  'retina/retina',
-  'crystal/crystal',
-  'processing/linda',
-  'bounce/bounce',
+  'forces/forces',
+  'lighthouse/lighthouse',
+  'marbles/marbles',
 }
 
 local function _findIndexInSetlist(fromPatchName)

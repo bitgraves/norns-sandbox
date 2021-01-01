@@ -12,6 +12,7 @@ function init()
   audio:rev_off() -- no system reverb
   audio:pitch_off() -- no system pitch analysis
   audio:monitor_mono() -- expect only channel 1 input
+  audio.level_monitor(0) -- just reset for now...
 
   params:add_control("peaks", "peaks", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("peaks", function(x)
@@ -48,8 +49,8 @@ function init()
   redraw()
 end
 
-function enc(nEnc, delta)
-
+function key(...)
+  BGUtil.setlist_key('forces/forces', ...)
 end
 
 -- mapping from Akai MPD218 knobs to param handlers
