@@ -32,6 +32,21 @@ function init()
   params:set_action("basis", function(x)
     engine.basis(util.linlin(0, 1, 0, 16, x))
   end)
+  
+  params:add_control("kick", "kick", controlspec.new(0, 1, 'lin', 0, 0, ''))
+  params:set_action("kick", function(x)
+    engine.kick(x)
+  end)
+  
+  params:add_control("click", "click", controlspec.new(0, 1, 'lin', 0, 0, ''))
+  params:set_action("click", function(x)
+    engine.click(x)
+  end)
+  
+  params:add_control("clap", "clap", controlspec.new(0, 1, 'lin', 0, 0, ''))
+  params:set_action("clap", function(x)
+    engine.clap(x)
+  end)
 
   params:add_control("amp", "amp", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("amp", function(x)
@@ -60,6 +75,10 @@ local ccAkaiMapping = {
   [13] = 'basis',
   [14] = 'monitor',
   [15] = 'amp',
+  [16] = 'kick',
+  [18] = 'click',
+  [19] = 'basis',
+  [20] = 'clap',
 }
 
 local ccHandlers = {
@@ -78,6 +97,18 @@ local ccHandlers = {
   ['basis'] = function(val)
     params:set('basis', val)
     return 'basis ' .. val
+  end,
+  ['kick'] = function(val)
+    params:set('kick', val)
+    return 'kick ' .. val
+  end,
+  ['click'] = function(val)
+    params:set('click', val)
+    return 'click ' .. val
+  end,
+  ['clap'] = function(val)
+    params:set('clap', val)
+    return 'clap ' .. val
   end,
   ['monitor'] = function(val)
     params:set('monitor', val)
