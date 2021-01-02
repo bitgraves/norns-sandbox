@@ -19,6 +19,11 @@ function init()
     engine.peaks(util.linlin(0, 1, 32, 1, x))
   end)
   
+  params:add_control("seqDur", "seqDur", controlspec.new(0, 1, 'lin', 0, 0, ''))
+  params:set_action("seqDur", function(x)
+    engine.seqDur(util.linlin(0, 1, 0.05, 0.17, x))
+  end)
+  
   params:add_control("noise", "noise", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("noise", function(x)
     engine.noise(util.linlin(0, 1, 0, 0.1, x))
@@ -32,6 +37,16 @@ function init()
   params:add_control("freqbase", "freqbase", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("freqbase", function(x)
     engine.freqbase(util.linlin(0, 1, 1, 2, x))
+  end)
+  
+  params:add_control("kickGain", "kickGain", controlspec.new(0, 1, 'lin', 0, 0, ''))
+  params:set_action("kickGain", function(x)
+    engine.kickGain(x)
+  end)
+  
+  params:add_control("noiseGain", "noiseGain", controlspec.new(0, 1, 'lin', 0, 0, ''))
+  params:set_action("noiseGain", function(x)
+    engine.noiseGain(x)
   end)
 
   params:add_control("amp", "amp", controlspec.new(0, 1, 'lin', 0, 0, ''))
@@ -56,17 +71,25 @@ end
 -- mapping from Akai MPD218 knobs to param handlers
 local ccAkaiMapping = {
   [3] = 'peaks',
-  [9] = 'noise',
+  [9] = 'seqDur',
   [12] = 'ana',
   [13] = 'freqbase',
   [14] = 'monitor',
   [15] = 'amp',
+  [16] = 'kickGain',
+  [17] = 'seqDur',
+  [18] = 'noiseGain',
+  [19] = 'noise',
 }
 
 local ccHandlers = {
   ['peaks'] = function(val)
     params:set('peaks', val)
     return 'peaks ' .. val
+  end,
+  ['seqDur'] = function(val)
+    params:set('seqDur', val)
+    return 'seq dur ' .. val
   end,
   ['noise'] = function(val)
     params:set('noise', val)
@@ -79,6 +102,14 @@ local ccHandlers = {
   ['freqbase'] = function(val)
     params:set('freqbase', val)
     return 'freq base ' .. val
+  end,
+  ['kickGain'] = function(val)
+    params:set('kickGain', val)
+    return 'kick ' .. val
+  end,
+  ['noiseGain'] = function(val)
+    params:set('noiseGain', val)
+    return 'snr ' .. val
   end,
   ['monitor'] = function(val)
     params:set('monitor', val)
@@ -98,22 +129,16 @@ function midiEvent(data)
     if index <= 11 then
       engine.filterNoteOn(index)
       redraw('freq mult ' .. index)
-    elseif index < 16 then
-      local param = index - 12
-      local seqDur = (0.035 + (param * 0.06)) * (0.85 + math.random() * 0.03);
-      engine.seqDur(seqDur)
-      redraw('seq dur ' .. seqDur)
-    else
-      engine.contraNoteOn(index - 16)
-      redraw('note')
+    elseif index > 11 and index < 16 then
+      local param = math.pow(2, index - 13)
+      engine.kickSeqMul(param)
+      redraw('kick seq mult ' .. param)
     end
     -- engine.noteOn(index + indexOffset)
   elseif d.type == 'note_off' then
     local index = d.note - 36
     if index < 11 then
       engine.filterNoteOff(0)
-    elseif index >= 16 then
-      engine.contraNoteOff(0)
     end
   elseif d.type == 'cc' then
     local handler = ccAkaiMapping[d.cc]
