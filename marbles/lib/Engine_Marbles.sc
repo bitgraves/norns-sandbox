@@ -2,8 +2,7 @@ Engine_Marbles : CroneEngine {
   var bCarrier, bModulator, bTrig;
   var <sCarrier ,<sModulator, <sFilter, <sLowMonitor;
   var cMaxLag = 2;
-  var seq, dur;
-  var seqDurQuant = 0.7;
+  var seq, pMod;
 
   *new { arg context, doneCallback;
     ^super.new(context, doneCallback);
@@ -17,40 +16,47 @@ Engine_Marbles : CroneEngine {
     bTrig = Bus.control(context.server, 1);
 
     bTrig.set(0);
+    TempoClock.tempo = 4 / 0.7;
   
     context.server.sync;
 
     // digital modulator pattern
-    seq = Pn(
-      Pwrand([
-        Pseq([Prand([19, 22]), 0, 0, 0, 0, 0]),
-        Pshuf(
-          [
-            Pseq([12, 0, 0]),
-            Pseq([0, 0]),
-            Pseq([-12, 0, 0, 0]),
-          ],
-          Pxrand([1, 3, 4]),
+    seq = Pbind(
+      \dur, Pn(
+        Pwrand([1, 0.5], [0.9, 0.1], inf),
+      ),
+      \n, Pn(
+        Pstutter(
+          4,
+          Pwrand([
+            Pseq([Prand([19, 22]), 0, 0, 0, 0, 0]),
+            Pshuf(
+              [
+                Pseq([12, 0, 0]),
+                Pseq([0, 0]),
+              ],
+              Pxrand([1, 3, 4]),
+            ),
+          ], [0.2, 0.8]),
         ),
-      ], [0.2, 0.8]),
-      inf
+        inf
+      ),
+      \ana, Pn(
+        Pxrand([2, 4, 6, 8, 10]) * 0.07,
+      ),
     ).asStream;
-  
-    dur = Pn(
-      Pwrand([1, 0.5], [0.9, 0.1], inf),
-      inf
-    ).asStream;
-  
-    Routine.new({
+    pMod = Routine.new({
       loop {
-        var param = seq.next.midiratio;
-        sModulator.set(\wvRatio, param);
-        sFilter.set(\digiRatio, param);
+        var e = seq.next(());
+        sModulator.set(\wvRatio, e.n.midiratio);
+        sFilter.set(\digiRatio, e.n.midiratio);
+        // sModulator.set(\inAmp, e.ana);
+        sModulator.set(\wvAmp, 1 - e.ana);
         bTrig.set(1);
-        (dur.next * seqDurQuant).wait;
+        e.dur.wait;
         bTrig.set(0);
       }
-    }).play;
+    }).play(TempoClock.default);
   
     SynthDef.new(\bgfCarrier,
       { arg inBus = 2, outBus = 0, amp = 1, gateBus = 0, noiseAmp = 0, sustain = 0.9;
@@ -58,7 +64,7 @@ Engine_Marbles : CroneEngine {
         var mix = DriveNoise.ar(in, noiseAmp, multi: 1.5);
         var gate = In.kr(gateBus, 1);
         var env = EnvGen.kr(
-          Env.perc(0.04, 5.0),
+          Env.perc(0.04, 1.0),
           gate: gate,
           levelScale: 1 - sustain,
           levelBias: sustain,
@@ -68,9 +74,9 @@ Engine_Marbles : CroneEngine {
     ).add;
 
     SynthDef.new(\bgfModulator,
-      { arg inBus = 2, outBus = 0, inAmp = 0, wvAmp = 1, wvFreq = 220, wvRatio = 0;
+      { arg inBus = 2, outBus = 0, inAmp = 0, wvAmp = 1, wvFreq = 220, wvRatio = 0, bend = 0;
         var in = In.ar(inBus, 1);
-        var freq = wvFreq * wvRatio;
+        var freq = wvFreq * wvRatio * bend.midiratio;
         var mix = Mix.ar([
           in * inAmp,
           SinOsc.ar(freq, mul: wvAmp),
@@ -111,7 +117,7 @@ Engine_Marbles : CroneEngine {
           BBandPass.ar(
             in + mod * 0.2,
             DelayL.kr(
-              digiFreq * digiRatio * spread * [1, 2, 3, 7, 8, 9, 10, 11, 13],
+              freq * spread * [1, 2, 3, 7, 8, 9, 10, 11, 13],
               cMaxLag * lags,
               lag * lags,
             ),
@@ -168,7 +174,7 @@ Engine_Marbles : CroneEngine {
     });
     this.addCommand("ana", "f", {|msg|
       sModulator.set(\inAmp, msg[1]);
-      sModulator.set(\wvAmp, 1 - msg[1]);
+      // sModulator.set(\wvAmp, 1 - msg[1]);
     });
     this.addCommand("lag", "f", {|msg|
         var param = msg[1].linlin(0, 1, 0.1, cMaxLag);
@@ -180,6 +186,12 @@ Engine_Marbles : CroneEngine {
     });
     this.addCommand("spread", "f", {|msg|
       sFilter.set(\spread, msg[1]);
+    });
+    this.addCommand("bend", "f", {|msg|
+      sModulator.set(\bend, msg[1]);
+    });
+    this.addCommand("sustain", "f", {|msg|
+      sCarrier.set(\sustain, msg[1]);
     });
 
     this.addCommand("noteOn", "i", {|msg|
@@ -195,6 +207,7 @@ Engine_Marbles : CroneEngine {
     sModulator.free;
     sFilter.free;
     sLowMonitor.free;
+    pMod.stop;
   }
 
 } 

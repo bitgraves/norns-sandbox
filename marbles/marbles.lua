@@ -39,9 +39,19 @@ function init()
     engine.freq(x)
   end)
   
-params:add_control("spread", "spread", controlspec.new(1, 5, 'lin', 1, 1, ''))
+  params:add_control("spread", "spread", controlspec.new(1, 5, 'lin', 1, 1, ''))
   params:set_action("spread", function(x)
     engine.spread(x)
+  end)
+  
+  params:add_control("bend", "bend", controlspec.new(0, 1, 'lin', 0, 0, ''))
+  params:set_action("bend", function(x)
+    engine.bend(util.linlin(0, 1, 0, -24, x))
+  end)
+  
+  params:add_control("sustain", "sustain", controlspec.new(0, 1, 'lin', 0, 0, ''))
+  params:set_action("sustain", function(x)
+    engine.sustain(util.linlin(0, 1, 0.9, 0.1, x))
   end)
 
   params:add_control("amp", "amp", controlspec.new(0, 1, 'lin', 0, 0, ''))
@@ -66,11 +76,13 @@ end
 -- mapping from Akai MPD218 knobs to param handlers
 local ccAkaiMapping = {
   [3] = 'lowMonitor',
-  [9] = 'carrierNoise',
+  [9] = 'bend',
   [12] = 'ana',
   [13] = 'lag',
   [14] = 'monitor',
   [15] = 'amp',
+  [17] = 'sustain',
+  [19] = 'carrierNoise',
 }
 
 local ccHandlers = {
@@ -78,6 +90,14 @@ local ccHandlers = {
     params:set('lowMonitor', val)
     local freq = util.linexp(0, 1, 100, 2000, val)
     return 'lo monitor ' .. util.round(freq, 1) .. ' ' .. util.round(val, 0.01)
+  end,
+  ['bend'] = function(val)
+    params:set('bend', val)
+    return 'bend ' .. val
+  end,
+  ['sustain'] = function(val)
+    params:set('sustain', val)
+    return 'sustain ' .. val
   end,
   ['carrierNoise'] = function(val)
     params:set('carrierNoise', val)
