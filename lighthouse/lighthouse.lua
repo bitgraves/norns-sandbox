@@ -40,7 +40,7 @@ function init()
   
   params:add_control("click", "click", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("click", function(x)
-    engine.click(x)
+    engine.click(util.linlin(0, 1, 0, 2, x))
   end)
   
   params:add_control("clap", "clap", controlspec.new(0, 1, 'lin', 0, 0, ''))
@@ -130,11 +130,15 @@ function midiEvent(data)
   local d = midi.to_msg(data)
   if d.type == 'note_on' then
     local index = d.note - 36
-    engine.vowelScale(util.linexp(0, 15, 0.5, 2.5, index))
-    engine.noteOn(index)
+    if index < 17 then
+      local sustain = util.linlin(0, 16, 0, 1, index)
+      engine.sustain(sustain)
+      redraw("sustain " .. tostring(sustain))
+    end
+    -- engine.noteOn(index)
   elseif d.type == 'note_off' then
     local index = d.note - 36
-    engine.noteOff(index)
+    -- engine.noteOff(index)
   elseif d.type == 'cc' then
     local handler = ccAkaiMapping[d.cc]
     if handler ~= nil and ccHandlers[handler] ~= nil then

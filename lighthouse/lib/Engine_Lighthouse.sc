@@ -29,42 +29,48 @@ Engine_Lighthouse : CroneEngine {
     context.server.sync;
 
     // main melodic pattern
-    seq = Pn(
-      Pwrand([
-        Pseq([1, 0]),
-        Pshuf(
-          [
-            Pseq([1, 0.5, 0]),
-            Pseq([-0.5, 0, 0, 0]),
-          ],
-          Pxrand([1, 3, 4]),
-        ),
-      ], [0.1, 0.9]),
-      inf
+    seq = Pbind(
+     \dur, Pn(
+        Pshuf([
+                Pn(1, 2),
+                Pn(2, 1),
+                Pn(0.5, 1),
+                Pn(0.3, 2),
+        ])
+      )
     ).asStream;
     pVowel = Routine.new({
       loop {
-        var param = seq.next * 0.05;
-        sModulator.set(\vowelOffset, param);
-        1.wait;
+        var e = seq.next(());
+        bTrig.set(1);
+        (e.dur * 0.1).wait;
+        bTrig.set(0);
+        (e.dur * 0.9).wait;
       }
-    }).play(TempoClock.default);
+    }).play(tPercClock);
 
     SynthDef.new(\bgfModulator,
-      { arg inBus = 2, outBus = 0, inAmp = 1, wvAmp = 0, index = 12, noise = 0, vowel = 0, vowelScale = 1, vowelOffset = 0;
+      { arg inBus = 2, outBus = 0, inAmp = 1, wvAmp = 0, index = 12, noise = 0, vowel = 0, vowelScale = 1, gateBus = 2, sustain = 1;
         var in = In.ar(inBus, 1);
 
-      var v1 = Vowel(\i, \tenor);
-      var v2 = Vowel(\e, \tenor);
-      // var v3 = Vowel(\a, \tenor);
-      var v = v1.blend(v2, vowel);
+        var env = EnvGen.kr(
+          Env.perc(0.01, 0.65),
+          gate: In.kr(gateBus, 1),
+          levelScale: 1 - sustain,
+          levelBias: sustain,
+        );
+  
+        var v1 = Vowel(\i, \bass);
+        var v2 = Vowel(\a, \bass);
+        // var v3 = Vowel(\a, \tenor);
+        var v = v1.blend(v2, (vowel + SinOsc.kr(0.2, mul: 0.35 * env)).fold(0, 1));
 
       var sound = DriveNoise.ar(in, noise, multi: 1.5);
       sound = Mix.ar([
         sound * inAmp,
         Mix.ar(Resonz.ar(
           (sound * 3).clip + WhiteNoise.ar(0.05),
-          freq: v.freqs * (vowelScale + vowelOffset),
+          freq: v.freqs * vowelScale,
           bwr: v.rqs,
           mul: v.amps
         )) * wvAmp * 10
@@ -75,9 +81,8 @@ Engine_Lighthouse : CroneEngine {
     ).add;
 
     SynthDef.new(\bgfFilter,
-      { arg inBus = 2, outBus = 0, modBus = 2, gateBus = 0, percBus = 0, basis = 0, amp = 0;
+      { arg inBus = 2, outBus = 0, modBus = 2, percBus = 0, basis = 0, amp = 0;
         var mod = In.ar(modBus, 1);
-        var gate = In.kr(gateBus, 1);
         var perc = In.ar(percBus, 1);
   
         var sound = Mix.ar(
@@ -89,10 +94,10 @@ Engine_Lighthouse : CroneEngine {
         sound = Compander.ar(
           sound,
           perc,
-          thresh: 0.5,
+          thresh: 0.35,
           slopeAbove: 0.1,
-          clampTime: 0.01,
-          relaxTime: 0.5,
+          clampTime: 0.005,
+          relaxTime: 0.4,
         );
 
         Out.ar(outBus, Pan2.ar(
@@ -106,7 +111,6 @@ Engine_Lighthouse : CroneEngine {
     pKick = Pbind(
       \instrument, \bgfBump,
       \outBus, bPerc,
-      \outTrigBus, bTrig,
       \dur, 0.1,
       \n, Pn(
         Pwrand([1, 12], [0.9, 0.1])
@@ -177,7 +181,7 @@ Engine_Lighthouse : CroneEngine {
     ).play(tPercClock);
   
     SynthDef.new(\bgfBump,
-      { |inBus = 2, outBus = 0, gain = 1, n = 0, release = 1, outTrigBus = 0|
+      { |inBus = 2, outBus = 0, gain = 1, n = 0, release = 1|
         var beat = IRand(1, 5);
         var osc = Mix.ar(
           SinOsc.ar(
@@ -195,7 +199,6 @@ Engine_Lighthouse : CroneEngine {
           Env.perc(0.01, release),
           doneAction: Done.freeSelf
         );
-        // Out.kr(outTrigBus, Impulse.kr(0));
         Out.ar(outBus, osc * env * gain);
       }
     ).add;
@@ -246,18 +249,21 @@ Engine_Lighthouse : CroneEngine {
     context.xg);
     sFilter = Synth.new(\bgfFilter, [
       \modBus, bModulator,
-      \gateBus, bTrig,
       \percBus, bPerc,
       \outBus, context.out_b.index],
     context.xg);
     sModulator = Synth.new(\bgfModulator, [
       \inBus, context.in_b[0].index,
+      \gateBus, bTrig,
       \outBus, bModulator],
     context.xg);
   
     // commands
     this.addCommand("amp", "f", {|msg|
       sFilter.set(\amp, msg[1]);
+    });
+    this.addCommand("sustain", "f", {|msg|
+      sModulator.set(\sustain, msg[1]);
     });
     this.addCommand("vowel", "f", {|msg|
       sModulator.set(\vowel, msg[1]);
