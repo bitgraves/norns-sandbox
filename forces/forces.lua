@@ -39,6 +39,11 @@ function init()
     engine.freqbase(util.linlin(0, 1, 1, 2, x))
   end)
   
+  params:add_control("freqPowerBase", "freqPowerBase", controlspec.new(0, 1, 'lin', 0, 0, ''))
+  params:set_action("freqPowerBase", function(x)
+    engine.freqPowerBase(util.linlin(0, 1, 1, 2, x))
+  end)
+  
   params:add_control("kickGain", "kickGain", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("kickGain", function(x)
     engine.kickGain(x)
@@ -56,7 +61,7 @@ function init()
   
   params:add_control("monitor", "monitor", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("monitor", function(x)
-    audio.level_monitor(x)
+    audio.level_monitor(util.linlin(0, 1, 0, 0.7, x))
   end)
   
   mid = midi.connect()
@@ -72,7 +77,7 @@ end
 local ccAkaiMapping = {
   [3] = 'peaks',
   [9] = 'seqDur',
-  [12] = 'ana',
+  [12] = 'freqPowerBase',
   [13] = 'freqbase',
   [14] = 'monitor',
   [15] = 'amp',
@@ -102,6 +107,10 @@ local ccHandlers = {
   ['freqbase'] = function(val)
     params:set('freqbase', val)
     return 'freq base ' .. val
+  end,
+  ['freqPowerBase'] = function(val)
+    params:set('freqPowerBase', val)
+    return 'power base ' .. val
   end,
   ['kickGain'] = function(val)
     params:set('kickGain', val)

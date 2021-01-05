@@ -5,6 +5,7 @@ Engine_Forces : CroneEngine {
   
   var gKickGain = 0;
   var gNoiseGain = 0;
+  var gFilterPowerBase = 1;
 
   var seq;
   var seqDur = 0.05;
@@ -113,7 +114,7 @@ Engine_Forces : CroneEngine {
     pFilter = Routine.new({
       loop {
         var e = seq.next(());
-        sFilter.set(\freqmult, 2.pow(e.freq));
+        sFilter.set(\freqmult, gFilterPowerBase.pow(e.freq));
         if(e.gate == 1, {
           bTrig.set(1);
         }, nil);
@@ -123,21 +124,22 @@ Engine_Forces : CroneEngine {
     }).play(TempoClock.default);
 
     SynthDef.new(\bgfModulator,
-      { arg inBus = 2, outBus = 0, inAmp = 0, wvAmp = 1, index = 17, wvBend = 0, noise = 0;
+      { arg inBus = 2, outBus = 0, inAmp = 1, wvAmp = 0.5, index = 17, wvBend = 0, noise = 0;
         var in = In.ar(inBus, 1);
         var mix = Mix.ar([
           in * inAmp,
-        PitShift.ar(
-          in: in,
-          shift: (index + 12).midiratio,
-          mul: wvAmp * 0.4
-        ),
-        PitchShift.ar(
-          in: in,
-          pitchRatio: index.midiratio,
-          mul: wvAmp * 0.4,
-        ),
-        GrayNoise.ar(noise),
+          /* PitShift.ar(
+            in: in,
+            shift: (index + 12).midiratio,
+            mul: wvAmp * 0.4
+          ),
+          PitchShift.ar(
+            in: in,
+            pitchRatio: index.midiratio,
+            mul: wvAmp * 0.4,
+          ), */
+          SinOsc.ar(110 * 1.midiratio, mul: wvAmp * 0.5),
+          GrayNoise.ar(noise),
         ]);
         Out.ar(outBus, mix);
       }
@@ -232,6 +234,9 @@ Engine_Forces : CroneEngine {
     });
     this.addCommand("kickSeqMul", "f", {|msg|
       kickSeqMul = msg[1];
+    });
+    this.addCommand("freqPowerBase", "f", {|msg|
+      gFilterPowerBase = msg[1];
     });
     this.addCommand("filterNoteOn", "i", {|msg|
       var index = msg[1];
