@@ -5,8 +5,9 @@ local Script = require 'script'
 BGUtil = {}
 
 local setlist = {
-  'forces/forces',
   'lighthouse/lighthouse',
+  'processing/processing',
+  'forces/forces',
   'marbles/marbles',
 }
 

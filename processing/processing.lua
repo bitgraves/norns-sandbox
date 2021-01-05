@@ -64,7 +64,7 @@ local ccAkaiMapping = {
 }
 
 function key(...)
-  BGUtil.setlist_key('processing/linda', ...)
+  BGUtil.setlist_key('processing/processing', ...)
 end
 
 local ccHandlers = {
