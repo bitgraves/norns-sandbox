@@ -1,7 +1,8 @@
 Engine_Lighthouse : CroneEngine {
-  var bModulator, bTrig, bPerc;
-  var <sModulator, <sFilter, <sPerc;
+  var bModulator, bTrig;
+  var <sModulator, <sFilter;
   var <pKick, <pClick, <pClap, <pVowel;
+  var <mOut;
 
   var seq;
   var gKickGain = 0, gClickGain = 0, gClapGain = 0;
@@ -20,7 +21,6 @@ Engine_Lighthouse : CroneEngine {
 
     bModulator = Bus.audio(context.server, 1);
     bTrig = Bus.control(context.server, 1);
-    bPerc = Bus.audio(context.server, 1);
 
     bTrig.set(0);
     tPercClock = TempoClock.new(1 / 0.8);
@@ -81,23 +81,13 @@ Engine_Lighthouse : CroneEngine {
     ).add;
 
     SynthDef.new(\bgfFilter,
-      { arg inBus = 2, outBus = 0, modBus = 2, percBus = 0, basis = 0, amp = 0;
+      { arg inBus = 2, outBus = 0, modBus = 2, basis = 0, amp = 0;
         var mod = In.ar(modBus, 1);
-        var perc = In.ar(percBus, 1);
-  
+
         var sound = Mix.ar(
           // cool with mid lopass on korg, >0 basis,
           // gets squeezed digital sounds that are still in tune.
           WaveletDaub.ar(mod, which: basis),
-        );
-        
-        sound = Compander.ar(
-          sound,
-          perc,
-          thresh: 0.35,
-          slopeAbove: 0.1,
-          clampTime: 0.005,
-          relaxTime: 0.4,
         );
 
         Out.ar(outBus, Pan2.ar(
@@ -106,150 +96,11 @@ Engine_Lighthouse : CroneEngine {
         ) * amp);
       }
     ).add;
-    
-    // rhythmic pattern
-    pKick = Pbind(
-      \instrument, \bgfBump,
-      \outBus, bPerc,
-      \dur, 0.1,
-      \n, Pn(
-        Pwrand([1, 12], [0.9, 0.1])
-      ),
-      \gain, Pn(
-        Pwrand([
-          Pseq([1, Pn(0, 11)]),
-          Pseq([1, Pn(0, 12), 0.5, 0, 0]),
-          Pseq([1, Pn(0, 7)]),
-        ], [7, 3, 1].normalizeSum),
-        inf
-      ) * Pfunc({ gKickGain }),
-      \oscOut, Pn(
-        Pfunc({
-          gOscOut.sendMsg("/bump");
-          1
-        })
-      ),
-    ).play(tPercClock);
-    pClick = Pbind(
-      \instrument, \bgfScatter,
-      \outBus, bPerc,
-      \dur, Pn(
-        Pshuf([
-          Pn(0.1, 16),
-          Pn(0.1, 8),
-          Pn(0.05, 12),
-          Pn(0.15, 4),
-        ])
-      ),
-      \gain, Pn(
-        Pshuf([
-          Prand([1, 0.7, 0.5, 0.25], 4),
-          Pwrand([1, 0], [0.75, 0.25], 4),
-          Pseq([1, 1, 1, 1]),
-        ]),
-        inf
-      ) * Pfunc({ gClickGain }),
-      \freq, Pn(
-        Pwrand([10000, 8000], [0.9, 0.1])
-      ),
-    ).play(tPercClock);
-    pClap = Pbind(
-      \instrument, \bgfSnr,
-      \outBus, bPerc,
-      \release, Pn(
-        Pwrand([0.08, 0.14], [0.9, 0.1])
-      ),
-      \dur, Pn(
-        Pshuf([
-          Pn(0.8, 2),
-          Pn(0.8, 1),
-          Pn(0.4, 3),
-          Pn(0.6, 2),
-        ])
-      ),
-      \gain, Pn(
-        Pshuf([
-          Prand([1, 0.7, 0.5, 0.25], 4),
-          Pwrand([1, 0], [0.75, 0.25], 4),
-          Pseq([1, 1, 1, 1]),
-        ]),
-        inf
-      ) * Pfunc({ gClapGain }),
-      \freq, Pn(
-        Pwrand([1200, 500], [0.9, 0.1])
-      ),
-    ).play(tPercClock);
-  
-    SynthDef.new(\bgfBump,
-      { |inBus = 2, outBus = 0, gain = 1, n = 0, release = 1|
-        var beat = IRand(1, 5);
-        var osc = Mix.ar(
-          SinOsc.ar(
-            freq: [
-              XLine.ar(800, 40 * n.midiratio, 0.01),
-              XLine.ar(801, (40 + beat) * n.midiratio, 0.01)
-            ],
-          );
-        ).tanh;
-        var mix = Mix.ar([
-          osc,
-          PinkNoise.ar()
-        ]);
-        var env = EnvGen.ar(
-          Env.perc(0.01, release),
-          doneAction: Done.freeSelf
-        );
-        Out.ar(outBus, osc * env * gain);
-      }
-    ).add;
-  
-    SynthDef.new(\bgfScatter,
-      { |inBus = 2, outBus = 0, gain = 1, n = 0, release = 0.01, freq = 10000|
-        var snd = Impulse.ar();// WhiteNoise.ar();
-        var flt = BPF.ar(snd, freq, 0.2);
-        var env = EnvGen.ar(
-          Env.perc(0.001, release),
-          doneAction: Done.freeSelf
-        );
-        Out.ar(outBus, flt * env * gain * 3);
-      }
-    ).add;
-  
-    SynthDef.new(\bgfSnr,
-      { |inBus = 2, outBus = 0, gain = 1, n = 0, release = 0.01, freq = 10000|
-        var snd = GrayNoise.ar();
-        var flt = BPF.ar(
-          snd + DelayN.ar(snd, 0.05, 0.05),
-          freq: [freq, freq * 2.2, freq * 3.1],
-          mul: [1, 0.8, 0.6],
-          rq: 0.4
-        );
-        var env = EnvGen.ar(
-          Env.perc(0.001, release),
-          doneAction: Done.freeSelf
-        );
-        flt = Clip.ar(flt * 8) * 0.8;
-        Out.ar(outBus, flt * env * gain);
-      }
-    ).add;
-  
-    SynthDef.new(\bgfPerc,
-      { |inBus = 2, outBus = 0, gain = 1, noise = 0.1|
-        var in = In.ar(inBus, 1);
-        var sound = DriveNoise.ar(in, noise, 2);
-        Out.ar(outBus, Pan2.ar(sound * gain, 0));
-      }
-    ).add;
 
     context.server.sync;
     
-    sPerc = Synth.new(\bgfPerc, [
-      \inBus, bPerc,
-      \outBus, context.out_b.index],
-    context.xg);
     sFilter = Synth.new(\bgfFilter, [
       \modBus, bModulator,
-      \percBus, bPerc,
       \outBus, context.out_b.index],
     context.xg);
     sModulator = Synth.new(\bgfModulator, [
@@ -302,7 +153,6 @@ Engine_Lighthouse : CroneEngine {
   free {
     sModulator.free;
     sFilter.free;
-    sPerc.free;
     pKick.stop;
     pClick.stop;
     pClap.stop;
