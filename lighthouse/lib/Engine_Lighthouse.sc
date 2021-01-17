@@ -2,22 +2,18 @@ Engine_Lighthouse : CroneEngine {
   var bModulator, bTrig;
   var <sModulator, <sFilter;
   var <pKick, <pClick, <pClap, <pVowel;
-  var <mOut;
+  var mOut, mapping, initMidiPatterns;
 
   var seq;
   var gKickGain = 0, gClickGain = 0, gClapGain = 0;
   var tPercClock;
   
-  var gOscOut;
-
   *new { arg context, doneCallback;
     ^super.new(context, doneCallback);
   }
 
   alloc {
     "Lighthouse alloc".postln;
-    
-    gOscOut = NetAddr.new("127.0.0.1", 4242);
 
     bModulator = Bus.audio(context.server, 1);
     bTrig = Bus.control(context.server, 1);
@@ -25,6 +21,25 @@ Engine_Lighthouse : CroneEngine {
     bTrig.set(0);
     tPercClock = TempoClock.new(1 / 0.8);
     TempoClock.tempo = 4; // default (non-perc)
+    
+    MIDIClient.init;
+    
+    // MFB Tanzbar
+    // TODO: abstract into lua layer
+    mapping = (
+      \chan: 2,
+      \controlChan: 9,
+  
+      \bd: -24,
+      \hh: -18,
+      \sd: -22,
+      \cp: -16,
+  
+      \bd1_tune: 3,
+      \hh_tune: 73,
+      \cp_filter: 18,
+      \cp_decay: 75,
+    );
   
     context.server.sync;
 
@@ -48,6 +63,129 @@ Engine_Lighthouse : CroneEngine {
         (e.dur * 0.9).wait;
       }
     }).play(tPercClock);
+    
+    initMidiPatterns = {
+      // midi perc out
+      pKick = Pchain(
+        Ppar([
+          Pbind(
+            \midicmd, \noteOn,
+            \chan, mapping.chan,
+            \note, mapping.bd,
+            \amp, Pfunc({
+              if(Pkey(\dur) == 3, { gKickGain * 0.5 }, { gKickGain })
+            }),
+          ),
+      
+          Pbind(
+            \midicmd, \control,
+            \chan, mapping.controlChan,
+            \ctlNum, mapping.bd1_tune,
+            \control, Pn(
+              Pwrand([72, 104], [0.9, 0.1])
+            ),
+          ),
+        ]),
+        Pbind(
+          \type, \midi,
+          \midiout, mOut,
+          \dur, Pn( // TODO: is this running separately for each child?
+            Pwrand([
+              12,
+              Pseq([13, 3]),
+              8,
+            ], [7, 3, 1].normalizeSum),
+            inf
+          ) * 0.1,
+        ),
+      ).play(tPercClock);
+        
+      pClick = Pchain(
+        Ppar([
+          Pbind(
+            \midicmd, \noteOn,
+            \chan, mapping.chan,
+            \note, mapping.hh,
+            \amp, Pn(
+              Pshuf([
+                Prand([1, 0.7, 0.5, 0.25], 4),
+                Pwrand([1, 0], [0.75, 0.25], 4),
+                Pseq([1, 1, 1, 1]),
+              ]),
+              inf
+            ) * Pfunc({ gClickGain }),
+          ),
+      
+          Pbind(
+            \midicmd, \control,
+            \chan, mapping.controlChan,
+            \ctlNum, mapping.hh_tune,
+            \control, Pn(
+              Pwrand([127, 64], [0.9, 0.1])
+            ),
+          ),
+        ]),
+        Pbind(
+          \type, \midi,
+          \midiout, mOut,
+          \dur, Pn(
+              Pshuf([
+                Pn(0.1, 16),
+                Pn(0.1, 8),
+                Pn(0.05, 12),
+                Pn(0.15, 4),
+              ])
+            ),
+        ),
+      ).play(tPercClock);
+      
+      pClap = Pchain(
+        Ppar([
+          Pbind(
+            \midicmd, \noteOn,
+            \chan, mapping.chan,
+            \note, mapping.cp,
+            \amp, Pn(
+              Pshuf([
+                Prand([1, 0.7, 0.5, 0.25], 4),
+                Pwrand([1, 0], [0.75, 0.25], 4),
+                Pseq([1, 1, 1, 1]),
+              ]),
+              inf
+            ) * Pfunc({ gClapGain }),
+          ),
+          Pbind(
+            \midicmd, \control,
+            \chan, mapping.controlChan,
+            \ctlNum, mapping.cp_filter,
+            \control, Pn(
+              Pwrand([0.35, 0.25], [0.5, 0.5]) * 127
+            ),
+          ),
+          Pbind(
+            \midicmd, \control,
+            \chan, mapping.controlChan,
+            \ctlNum, mapping.cp_release,
+            \control, Pn(
+              Pwrand([0.08, 0.14], [0.9, 0.1]) * 127
+            ),
+          ),
+        ]),
+        Pbind(
+          \type, \midi,
+          \midiout, mOut,
+          \dur, Pn(
+            Pshuf([
+              Pn(0.8, 2),
+              Pn(0.8, 1),
+              Pn(0.4, 3),
+              Pn(0.6, 2),
+            ])
+          ),
+        ),
+      ).play(tPercClock);
+      nil
+    };
 
     SynthDef.new(\bgfModulator,
       { arg inBus = 2, outBus = 0, inAmp = 1, wvAmp = 0, index = 12, noise = 0, vowel = 0, vowelScale = 1, gateBus = 2, sustain = 1;
@@ -110,6 +248,12 @@ Engine_Lighthouse : CroneEngine {
     context.xg);
   
     // commands
+    this.addCommand("connectMidi", "i", {|msg|
+      var destination = msg[1];
+      mOut = MIDIOut.new(0); //.latency_(context.server.latency);
+      mOut.connect(destination);
+      initMidiPatterns.value;
+    });
     this.addCommand("amp", "f", {|msg|
       sFilter.set(\amp, msg[1]);
     });
@@ -153,10 +297,13 @@ Engine_Lighthouse : CroneEngine {
   free {
     sModulator.free;
     sFilter.free;
+    pVowel.stop;
+    bModulator.free;
+    bTrig.free;
+    mOut.disconnect;
     pKick.stop;
     pClick.stop;
     pClap.stop;
-    pVowel.stop;
   }
 
 } 
