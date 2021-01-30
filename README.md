@@ -21,6 +21,6 @@ All of the norns engines here support a large handful of `params`. At the time o
 
 ## MIDI Output
 
-At least one engine (Lighthouse) can optionally send MIDI control to an external synthesizer via an interface (we use iConnectivity Mio). However, at the moment, this requires compiling a patch to `matron`. Please get in touch if you want to learn how to set this up. The Lighthouse engine should still run and play sound intrinsically without this; it just won't include the external synth part.
+Some engines can optionally send MIDI control to an external synthesizer via an interface (we use iConnectivity Mio). However, at the moment, this requires compiling a patch to `matron`. Please get in touch if you want to learn how to set this up. These engines should still run and play sound intrinsically without this; they just won't include the external synth part.
 
 For MIDI Output, the cc mappings live in `common/bgmidi.lua`.
