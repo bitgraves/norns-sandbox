@@ -23,23 +23,7 @@ Engine_Lighthouse : CroneEngine {
     TempoClock.tempo = 4; // default (non-perc)
     
     MIDIClient.init;
-    
-    // MFB Tanzbar
-    // TODO: abstract into lua layer
-    mapping = (
-      \chan: 2,
-      \controlChan: 9,
-  
-      \bd: -24,
-      \hh: -18,
-      \sd: -22,
-      \cp: -16,
-  
-      \bd1_tune: 3,
-      \hh_tune: 73,
-      \cp_filter: 18,
-      \cp_decay: 75,
-    );
+    mapping = ();
   
     context.server.sync;
 
@@ -269,6 +253,10 @@ Engine_Lighthouse : CroneEngine {
       } { |error|
         "connect midi failed: %".format(error.species.name).postln;
       }
+    });
+    this.addCommand("addMidiMapping", "si", {|msg|
+      "add midi mapping: % -> %".format(msg[1], msg[2]).postln;
+      mapping.put(msg[1], msg[2]);
     });
     this.addCommand("amp", "f", {|msg|
       sFilter.set(\amp, msg[1]);

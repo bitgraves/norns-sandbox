@@ -2,6 +2,7 @@
 -- requires Vowel quark
 
 local BGUtil = include('bitgraves/common/bgutil')
+local BGMidi = include('bitgraves/common/bgmidi')
 local Hexagon = include('bitgraves/common/hexagon')
 
 engine.name = 'Lighthouse'
@@ -12,6 +13,7 @@ function init()
   audio:pitch_off() -- no system pitch analysis
   audio:monitor_mono() -- expect only channel 1 input
   audio.level_monitor(0) -- just reset for now...
+  BGMidi.sendMapping("tanzbar", engine.addMidiMapping)
 
   params:add_control("vowel", "vowel", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("vowel", function(x)
