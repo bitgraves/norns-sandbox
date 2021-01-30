@@ -1,7 +1,7 @@
 Engine_Noop : CroneEngine {
-  var <sNoise;
+  var <sNoise, <sPerc;
   var pKick, pBlip1, pBlip2;
-  var bNoiseGate;
+  var bNoiseGate, bPerc;
   var gKkGain = 0, gBlipGain = 0, gRampKick = 0;
   var mOut, mapping, initMidiPatterns, stopMidiPatterns;
 
@@ -14,6 +14,7 @@ Engine_Noop : CroneEngine {
 
     TempoClock.tempo = 1.8;
     bNoiseGate = Bus.control(context.server, 1);
+    bPerc = Bus.audio(context.server, 1);
     
     MIDIClient.init;
     mapping = ();
@@ -31,6 +32,72 @@ Engine_Noop : CroneEngine {
       pBlip1.stop;
       pBlip2.stop;
     };
+    
+    // filtered bass pattern
+    pKick = Pbind(
+      \instrument, \bgnHit,
+      \inBus, context.in_b[0].index,
+      \outBus, bPerc,
+      \group, context.xg,
+      \n, Pgate(Pwhite(0, 24), key: \oct),
+      \oct, Pn(Pwrand([0, 1], [0.9, 0.1])),
+      \dur, Pn(
+        Pwrand([
+          Pseq([0.5, 0.5, 2]),
+          Pseq([0.75, 0.75, 1.5]),
+        ], [0.95, 0.05]),
+      ),
+      \attack, Pn(
+        Pseq([
+          0.01,
+          Pif(
+            Pfunc({ gRampKick >= 1 }),
+            Prand([0.01, 0.05, 0.1, 0.25]),
+            0.01
+          ),
+          0.01
+        ]),
+      ),
+      \release, Pn(
+        Pseq([0.5, 0.5, 1.5]),
+      ),
+      \amp, Pn(
+        Pseq([
+          Pwrand([0.9, 0], [0.9, 0.1]),
+          Pwrand([0.85, 0.5, 0], [0.8, 0.1, 0.1]),
+          1
+        ]),
+      ) * Pfunc({ gKkGain }),
+      \outGateBus, bNoiseGate,
+    ).play(TempoClock.default);
+    SynthDef.new(\bgnHit,
+      { | inBus = 2, outBus = 0, amp = 1, n = 0, attack = 0.01, release = 1, outGateBus |
+        var in = In.ar(inBus, 1);
+        var beat = IRand(1, 7);
+        var nClamp =  n.clip(0, 48);
+        var osc = Mix.ar(
+          RLPF.ar(
+            in,
+            freq: [
+              XLine.ar(900, 110 * nClamp.midiratio, 0.01),
+              XLine.ar(901, (110 + beat) * nClamp.midiratio, 0.01),
+              XLine.ar(1800, 220 * nClamp.midiratio, 0.01, mul: 0.5),
+            ],
+            rq: 0.5,
+          );
+        ).tanh;
+        var mix = Mix.ar([
+          osc, // bass
+          LPF.ar(WhiteNoise.ar(mul: 0.7), XLine.ar(8000, 200, 0.01)), //click
+        ]);
+        var env = EnvGen.ar(
+          Env.perc(attack, release),
+          doneAction: Done.freeSelf
+        );
+        Out.ar(outBus, mix * env * amp);
+        Out.kr(outGateBus, Impulse.kr(0) * amp);
+      }
+    ).add;
 
     SynthDef.new(\bgnNoise,
       { | inBus = 2, outBus = 0, clip = 0, gateBus = 0, amp = 0, duckAmount = 0, rez = 0, harm = 1, poly = 0 |
@@ -70,9 +137,21 @@ Engine_Noop : CroneEngine {
         Out.ar(outBus, Pan2.ar(sound) * amp);
       }
     ).add;
+    
+    SynthDef.new(\bgnPerc,
+      { |inBus = 2, outBus = 0, gain = 1, noise = 0.1|
+        var in = In.ar(inBus, 1);
+        var sound = in; //DriveNoise.ar(in, noise, 2);
+        Out.ar(outBus, Pan2.ar(sound * gain, 0));
+      }
+    ).add;
 
     context.server.sync;
     
+    sPerc = Synth.new(\bgnPerc, [
+      \inBus, bPerc,
+      \outBus, context.out_b.index],
+    context.xg);
     sNoise = Synth.new(\bgnNoise, [
       \inBus, context.in_b[0].index,
       \outBus, context.out_b.index,
@@ -136,6 +215,7 @@ Engine_Noop : CroneEngine {
   free {
     sNoise.fre;
     bNoiseGate.free;
+    bPerc.free;
     try {
       stopMidiPatterns.value;
       mOut.disconnect;
