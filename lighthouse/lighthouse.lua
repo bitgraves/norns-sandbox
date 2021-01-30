@@ -130,13 +130,14 @@ function midiEvent(data)
   local d = midi.to_msg(data)
   if d.type == 'note_on' then
     local index = d.note - 36
-    if index == 17 then
-      print('lua connect midi')
-      engine.connectMidi(1)
-    elseif index < 17 then
+    if index < 17 then
       local sustain = util.linlin(0, 16, 0, 1, index)
       engine.sustain(sustain)
       redraw("sustain " .. tostring(sustain))
+    elseif index > 31 then
+      local midiDeviceIndex = index - 32
+      engine.connectMidi(midiDeviceIndex)
+      redraw("try midi: " .. tostring(midiDeviceIndex))
     end
     -- engine.noteOn(index)
   elseif d.type == 'note_off' then

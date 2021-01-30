@@ -2,7 +2,7 @@ Engine_Lighthouse : CroneEngine {
   var bModulator, bTrig;
   var <sModulator, <sFilter;
   var <pKick, <pClick, <pClap, <pVowel;
-  var mOut, mapping, initMidiPatterns;
+  var mOut, mapping, initMidiPatterns, stopMidiPatterns;
 
   var seq;
   var gKickGain = 0, gClickGain = 0, gClapGain = 0;
@@ -186,6 +186,12 @@ Engine_Lighthouse : CroneEngine {
       ).play(tPercClock);
       nil
     };
+    
+    stopMidiPatterns = {
+      pKick.stop;
+      pClick.stop;
+      pClap.stop;
+    };
 
     SynthDef.new(\bgfModulator,
       { arg inBus = 2, outBus = 0, inAmp = 1, wvAmp = 0, index = 12, noise = 0, vowel = 0, vowelScale = 1, gateBus = 2, sustain = 1;
@@ -250,9 +256,19 @@ Engine_Lighthouse : CroneEngine {
     // commands
     this.addCommand("connectMidi", "i", {|msg|
       var destination = msg[1];
-      mOut = MIDIOut.new(0); //.latency_(context.server.latency);
-      mOut.connect(destination);
-      initMidiPatterns.value;
+      try {
+        // in case already connnected, reset
+        stopMidiPatterns.value;
+        mOut.disconnect;
+      } { };
+      
+      try {
+        mOut = MIDIOut.new(0); //.latency_(context.server.latency);
+        mOut.connect(destination);
+        initMidiPatterns.value;
+      } { |error|
+        "connect midi failed: %".format(error.species.name).postln;
+      }
     });
     this.addCommand("amp", "f", {|msg|
       sFilter.set(\amp, msg[1]);
@@ -300,10 +316,12 @@ Engine_Lighthouse : CroneEngine {
     pVowel.stop;
     bModulator.free;
     bTrig.free;
-    mOut.disconnect;
-    pKick.stop;
-    pClick.stop;
-    pClap.stop;
+    try {
+      stopMidiPatterns.value;
+      mOut.disconnect;
+    } { |error|
+      "disconnect midi failed (possibly never connected): %".format(error.species.name).postln;
+    }
   }
 
 } 
