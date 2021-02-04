@@ -9,7 +9,9 @@ local midiOutDestinationMappings = {
     controlChan = 9,
 
     bd = -24,
+    oh = -19,
     hh = -18,
+    cl = -17,
     sd = -22,
     cp = -16,
     ltc = -15,

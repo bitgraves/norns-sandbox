@@ -57,7 +57,9 @@ Engine_Noop : CroneEngine {
           Pbind(
             \midicmd, \noteOn,
             \chan, mapping.chan,
-            \note, mapping.hh,
+            \note, Pn(
+              Pseq([mapping.hh, mapping.oh, mapping.oh]),
+            ),
             \amp, Pn(
               Pseq([1, 0.1, 0.1]),
             ) * Pfunc({ gBlipGain }),
