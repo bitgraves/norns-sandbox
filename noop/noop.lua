@@ -44,6 +44,11 @@ function init()
     engine.click(util.linlin(0, 1, 0, 2, x))
   end)
   
+  params:add_control("drumsMonitorGain", "drumsMonitorGain", controlspec.new(0, 1, 'lin', 0, 0, ''))
+  params:set_action("drumsMonitorGain", function(x)
+    engine.drumsMonitorGain(util.linlin(0, 1, 1, 2, x))
+  end)
+  
   params:add_control("kickRamp", "kickRamp", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("kickRamp", function(x)
     engine.kickRamp(x)
@@ -78,7 +83,7 @@ local ccAkaiMapping = {
   [15] = 'amp',
   [16] = 'kick',
   [17] = 'kickRamp',
-  [18] = 'click',
+  [18] = 'drumsMonitorGain',
 }
 
 local ccHandlers = {
@@ -109,6 +114,10 @@ local ccHandlers = {
   ['kickRamp'] = function(val)
     params:set('kickRamp', val)
     return 'kick ramp ' .. val
+  end,
+  ['drumsMonitorGain'] = function(val)
+    params:set('drumsMonitorGain', val)
+    return 'drums monitor ' .. val
   end,
   ['monitor'] = function(val)
     params:set('monitor', val)

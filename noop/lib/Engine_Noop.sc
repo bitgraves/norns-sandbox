@@ -2,7 +2,7 @@ Engine_Noop : CroneEngine {
   var <sNoise, <sPerc;
   var pKick, pBlip1, pBlip2, pSnare;
   var bNoiseGate, bPerc;
-  var gKkGain = 0, gBlipGain = 0, gRampKick = 0;
+  var gKkGain = 0, gBlipGain = 1, gRampKick = 0;
   var mOut, mapping, initMidiPatterns, stopMidiPatterns;
 
   *new { arg context, doneCallback;
@@ -209,9 +209,10 @@ Engine_Noop : CroneEngine {
     ).add;
     
     SynthDef.new(\bgnPerc,
-      { |inBus = 2, outBus = 0, gain = 1, noise = 0.1|
+      { |inBus = 2, monitorBus = 2, monitorGain = 1, outBus = 0, gain = 1, noise = 0.1|
         var in = In.ar(inBus, 1);
-        var sound = in; //DriveNoise.ar(in, noise, 2);
+        var monitor = In.ar(monitorBus, 1) * monitorGain;
+        var sound = Mix.ar([in, monitor]); //DriveNoise.ar(in, noise, 2);
         Out.ar(outBus, Pan2.ar(sound * gain, 0));
       }
     ).add;
@@ -220,6 +221,7 @@ Engine_Noop : CroneEngine {
     
     sPerc = Synth.new(\bgnPerc, [
       \inBus, bPerc,
+      \monitorBus, context.in_b[1].index, // optionally pass thru norns 2nd audio input
       \outBus, context.out_b.index],
     context.xg);
     sNoise = Synth.new(\bgnNoise, [
@@ -276,6 +278,9 @@ Engine_Noop : CroneEngine {
     });
     this.addCommand("click", "f", {|msg|
       gBlipGain = msg[1];
+    });
+    this.addCommand("drumsMonitorGain", "f", {|msg|
+      sPerc.set(\monitorGain, msg[1]);
     });
     this.addCommand("kickRamp", "f", {|msg|
       gRampKick = msg[1];
