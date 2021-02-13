@@ -75,4 +75,22 @@ function BGUtil.setlist_next(fromPatchName)
   end
 end
 
+function BGUtil.addEngineControlParam(params, args)
+  local spec
+  if args.controlspec then
+    spec = args.controlspec
+  else
+    local min, max = args.min or 0, args.max or 1
+    spec = controlspec.new(min, max, args.warp or 'lin', 0, 0, args.units or '')
+  end
+  params:add({
+    id = args.id,
+    type = "control",
+    controlspec = spec,
+    action = function(x)
+      engine[args.id](x)
+    end,
+  })
+end
+
 return BGUtil

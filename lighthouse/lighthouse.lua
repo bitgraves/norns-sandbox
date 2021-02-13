@@ -15,45 +15,14 @@ function init()
   audio.level_monitor(0) -- just reset for now...
   BGMidi.sendMapping("tanzbar", engine.addMidiMapping)
 
-  params:add_control("vowel", "vowel", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("vowel", function(x)
-    engine.vowel(x)
-  end)
-  
-  params:add_control("noise", "noise", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("noise", function(x)
-    engine.noise(util.linlin(0, 1, 0, 2, x))
-  end)
-  
-  params:add_control("ana", "ana", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("ana", function(x)
-    engine.ana(x)
-  end)
-  
-  params:add_control("basis", "basis", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("basis", function(x)
-    engine.basis(util.linlin(0, 1, 0, 16, x))
-  end)
-  
-  params:add_control("kick", "kick", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("kick", function(x)
-    engine.kick(x)
-  end)
-  
-  params:add_control("click", "click", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("click", function(x)
-    engine.click(util.linlin(0, 1, 0, 2, x))
-  end)
-  
-  params:add_control("clap", "clap", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("clap", function(x)
-    engine.clap(x)
-  end)
-
-  params:add_control("amp", "amp", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("amp", function(x)
-    engine.amp(x)
-  end)
+  BGUtil.addEngineControlParam(params, { id = "vowel" })
+  BGUtil.addEngineControlParam(params, { id = "noise", max = 2 })
+  BGUtil.addEngineControlParam(params, { id = "ana" })
+  BGUtil.addEngineControlParam(params, { id = "basis", max = 16 })
+  BGUtil.addEngineControlParam(params, { id = "kick" })
+  BGUtil.addEngineControlParam(params, { id = "click", max = 2 })
+  BGUtil.addEngineControlParam(params, { id = "clap" })
+  BGUtil.addEngineControlParam(params, { id = "amp" })
   
   params:add_control("monitor", "monitor", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("monitor", function(x)
@@ -90,10 +59,16 @@ local ccAkaiMapping = {
 
 local ccHandlers = {
   ['vowel'] = function(val)
+    -- TODO: generalize
+    local param = params:lookup_param('vowel')
+    local maxval = param.controlspec.maxval
+    print('maxval for vowel is: ' .. tostring(maxval))
     params:set('vowel', val)
     return 'vowel ' .. val
   end,
   ['noise'] = function(val)
+    -- TODO: val will always be 0-1 (midi input)
+    -- need to map to range of controlspec
     params:set('noise', val)
     return 'noise ' .. val
   end,
