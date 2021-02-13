@@ -8,6 +8,8 @@ local Hexagon = include('bitgraves/common/hexagon')
 engine.name = 'Lighthouse'
 mid = nil
 
+local MPD218
+
 function init()
   audio:rev_off() -- no system reverb
   audio:pitch_off() -- no system pitch analysis
@@ -29,6 +31,19 @@ function init()
     audio.level_monitor(x)
   end)
   
+  MPD218 = BGMidi.newInputMappingMPD218({
+    [3] = 'vowel',
+    [9] = 'noise',
+    [12] = 'ana',
+    [13] = 'basis',
+    [14] = 'monitor',
+    [15] = 'amp',
+    [16] = 'kick',
+    [18] = 'click',
+    [19] = 'basis',
+    [20] = 'clap',
+  })
+  
   mid = midi.connect()
   mid.event = midiEvent
   redraw()
@@ -42,65 +57,6 @@ end
 function key(...)
   BGUtil.setlist_key('lighthouse/lighthouse', ...)
 end
-
--- mapping from Akai MPD218 knobs to param handlers
-local ccAkaiMapping = {
-  [3] = 'vowel',
-  [9] = 'noise',
-  [12] = 'ana',
-  [13] = 'basis',
-  [14] = 'monitor',
-  [15] = 'amp',
-  [16] = 'kick',
-  [18] = 'click',
-  [19] = 'basis',
-  [20] = 'clap',
-}
-
-local ccHandlers = {
-  ['vowel'] = function(val)
-    -- TODO: generalize
-    local param = params:lookup_param('vowel')
-    local maxval = param.controlspec.maxval
-    print('maxval for vowel is: ' .. tostring(maxval))
-    params:set('vowel', val)
-    return 'vowel ' .. val
-  end,
-  ['noise'] = function(val)
-    -- TODO: val will always be 0-1 (midi input)
-    -- need to map to range of controlspec
-    params:set('noise', val)
-    return 'noise ' .. val
-  end,
-  ['ana'] = function(val)
-    params:set('ana', val)
-    return 'ana ' .. val
-  end,
-  ['basis'] = function(val)
-    params:set('basis', val)
-    return 'basis ' .. val
-  end,
-  ['kick'] = function(val)
-    params:set('kick', val)
-    return 'kick ' .. val
-  end,
-  ['click'] = function(val)
-    params:set('click', val)
-    return 'click ' .. val
-  end,
-  ['clap'] = function(val)
-    params:set('clap', val)
-    return 'clap ' .. val
-  end,
-  ['monitor'] = function(val)
-    params:set('monitor', val)
-    return 'monitor ' .. val
-    end,
-  ['amp'] = function(val)
-    params:set('amp', val)
-    return 'amp ' .. val
-  end,
-}
 
 function midiEvent(data)
   -- tab.print(midi.to_msg(data))
@@ -121,14 +77,13 @@ function midiEvent(data)
     local index = d.note - 36
     -- engine.noteOff(index)
   elseif d.type == 'cc' then
-    local handler = ccAkaiMapping[d.cc]
-    if handler ~= nil and ccHandlers[handler] ~= nil then
-      local msg = ccHandlers[handler](d.val / 127)
+    local handled, msg = BGMidi.handleCCMPD218(MPD218, params, d.cc, d.val)
+    if handled then
       redraw(msg)
     end
   end
 end
 
 function redraw(msg)
-  Hexagon:draw(msg, ccAkaiMapping)
+  Hexagon:draw(msg, MPD218.ccMapping)
 end

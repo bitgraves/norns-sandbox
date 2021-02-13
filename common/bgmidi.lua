@@ -41,4 +41,35 @@ function BGMidi.sendMapping(midiOutDestination, sendMappingCommand)
   end
 end
 
+function BGMidi.newInputMappingMPD218(mappings)
+  local mapping = {
+    ccMapping = {},
+    ccHandlers = {},
+  }
+  for ccIndex, paramId in pairs(mappings) do
+    BGMidi.addCCMPD218(mapping, ccIndex, paramId)
+  end
+  return mapping
+end
+
+function BGMidi.addCCMPD218(mapping, ccIndex, paramId)
+  mapping.ccMapping[ccIndex] = paramId
+  mapping.ccHandlers[paramId] = function(params, val)
+    val = val / 127
+    local param = params:lookup_param(paramId)
+    local mappedVal = param.controlspec:map(val)
+    params:set(paramId, mappedVal)
+    return tostring(paramId) .. ' ' .. mappedVal
+  end
+end
+
+function BGMidi.handleCCMPD218(mapping, params, cc, val)
+  local paramId = mapping.ccMapping[cc]
+  if paramId ~= nil and mapping.ccHandlers[paramId] ~= nil then
+    local msg = mapping.ccHandlers[paramId](params, val)
+    return true, msg
+  end
+  return false
+end
+
 return BGMidi
