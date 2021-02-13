@@ -8,6 +8,7 @@ local Hexagon = {
   ccIndex = { 13, 15, 14, 12, 3, 9 }, -- Akai MPD218
 }
 
+-- TODO: migrate all patches to newer version, delete this
 -- renders Hexagon, which is not really a hexagon.
 -- asks for values from params:get().
 -- assumes they have range 0-1 for now.
@@ -25,6 +26,37 @@ function Hexagon:draw(msg, ccParamMapping)
       local val = params:get(paramName)
       screen.move(self.center.x, self.center.y)
       screen.arc(self.center.x, self.center.y, self.r * val, angle, nextAngle)
+      screen.close()
+      screen.stroke()
+    end
+    angle = nextAngle
+  end
+  
+  if msg ~= nil then
+    screen.move(0, 64 - 4)
+    screen.text(msg)
+  end
+  
+  screen.update()
+end
+
+-- TODO: migrate all patches to this version
+-- renders Hexagon, which is not really a hexagon.
+-- @param MPD218Mapping a table returned from BGMidi.newInputMappingMPD218()
+function Hexagon:drawFancy(MPD218, msg)
+  screen.clear()
+  screen.level(8)
+
+  local angle = self.incAngle * -0.5
+  for region = 1, 6 do
+    local nextAngle = angle + self.incAngle
+    local paramId = MPD218.ccMapping[self.ccIndex[region] ]
+    if paramId ~= nil and paramId ~= '' then
+      local param = params:lookup_param(paramId)
+      local val = params:get(paramId)
+      local unmappedVal = param.controlspec:unmap(val)
+      screen.move(self.center.x, self.center.y)
+      screen.arc(self.center.x, self.center.y, self.r * unmappedVal, angle, nextAngle)
       screen.close()
       screen.stroke()
     end
