@@ -75,6 +75,13 @@ function BGUtil.setlist_next(fromPatchName)
   end
 end
 
+function BGUtil.configureSystemStuff()
+  audio:rev_off() -- no system reverb
+  audio:pitch_off() -- no system pitch analysis
+  audio:monitor_mono() -- expect only channel 1 input
+  audio.level_monitor(0) -- just reset for now...
+end
+
 function BGUtil.addEngineControlParam(params, args)
   local spec
   if args.controlspec then

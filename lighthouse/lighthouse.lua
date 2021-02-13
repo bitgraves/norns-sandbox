@@ -11,10 +11,7 @@ mid = nil
 local MPD218
 
 function init()
-  audio:rev_off() -- no system reverb
-  audio:pitch_off() -- no system pitch analysis
-  audio:monitor_mono() -- expect only channel 1 input
-  audio.level_monitor(0) -- just reset for now...
+  BGUtil.configureSystemStuff()
   BGMidi.sendMapping("tanzbar", engine.addMidiMapping)
 
   BGUtil.addEngineControlParam(params, { id = "vowel" })
