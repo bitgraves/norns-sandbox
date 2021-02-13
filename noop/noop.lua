@@ -7,6 +7,8 @@ local Hexagon = include('bitgraves/common/hexagon')
 engine.name = 'Noop'
 mid = nil
 
+local MPD218
+
 function init()
   audio:rev_off() -- no system reverb
   audio:pitch_off() -- no system pitch analysis
@@ -14,55 +16,33 @@ function init()
   audio.level_monitor(0) -- just reset for now...
   BGMidi.sendMapping("tanzbar", engine.addMidiMapping)
   
-  params:add_control("rez", "rez", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("rez", function(x)
-    engine.rez(x)
-  end)
-  
-  params:add_control("clip", "clip", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("clip", function(x)
-    engine.clip(x)
-  end)
-  
-  params:add_control("polyNoise", "polyNoise", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("polyNoise", function(x)
-    engine.polyNoise(x)
-  end)
-  
-  params:add_control("duck", "duck", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("duck", function(x)
-    engine.duck(x)
-  end)
-  
-  params:add_control("kick", "kick", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("kick", function(x)
-    engine.kick(x)
-  end)
-  
-  params:add_control("click", "click", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("click", function(x)
-    engine.click(util.linlin(0, 1, 0, 2, x))
-  end)
-  
-  params:add_control("drumsMonitorGain", "drumsMonitorGain", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("drumsMonitorGain", function(x)
-    engine.drumsMonitorGain(util.linlin(0, 1, 1, 2, x))
-  end)
-  
-  params:add_control("kickRamp", "kickRamp", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("kickRamp", function(x)
-    engine.kickRamp(x)
-  end)
+  BGUtil.addEngineControlParam(params, { id = "rez" })
+  BGUtil.addEngineControlParam(params, { id = "clip" })
+  BGUtil.addEngineControlParam(params, { id = "polyNoise" })
+  BGUtil.addEngineControlParam(params, { id = "duck" })
+  BGUtil.addEngineControlParam(params, { id = "kick" })
+  BGUtil.addEngineControlParam(params, { id = "click", max = 2 })
+  BGUtil.addEngineControlParam(params, { id = "duck" })
+  BGUtil.addEngineControlParam(params, { id = "drumsMonitorGain", min = 1, max = 2 })
+  BGUtil.addEngineControlParam(params, { id = "kickRamp" })
+  BGUtil.addEngineControlParam(params, { id = "amp" })
 
-  params:add_control("amp", "amp", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("amp", function(x)
-    engine.amp(x)
-  end)
-  
   params:add_control("monitor", "monitor", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("monitor", function(x)
     audio.level_monitor(x)
   end)
+  
+  MPD218 = BGMidi.newInputMappingMPD218({
+    [3] = 'rez',
+    [9] = 'clip',
+    [12] = 'polyNoise',
+    [13] = 'duck',
+    [14] = 'monitor',
+    [15] = 'amp',
+    [16] = 'kick',
+    [17] = 'kickRamp',
+    [18] = 'drumsMonitorGain',
+  })
   
   mid = midi.connect()
   mid.event = midiEvent
@@ -72,62 +52,6 @@ end
 function key(...)
   BGUtil.setlist_key('noop/noop', ...)
 end
-
--- mapping from Akai MPD218 knobs to param handlers
-local ccAkaiMapping = {
-  [3] = 'rez',
-  [9] = 'clip',
-  [12] = 'polyNoise',
-  [13] = 'duck',
-  [14] = 'monitor',
-  [15] = 'amp',
-  [16] = 'kick',
-  [17] = 'kickRamp',
-  [18] = 'drumsMonitorGain',
-}
-
-local ccHandlers = {
-  ['rez'] = function(val)
-    params:set('rez', val)
-    return 'rez ' .. val
-  end,
-  ['clip'] = function(val)
-    params:set('clip', val)
-    return 'clip ' .. val
-  end,
-  ['polyNoise'] = function(val)
-    params:set('polyNoise', val)
-    return 'poly ' .. val
-  end,
-  ['duck'] = function(val)
-    params:set('duck', val)
-    return 'duck ' .. val
-  end,
-  ['kick'] = function(val)
-    params:set('kick', val)
-    return 'kick ' .. val
-  end,
-  ['click'] = function(val)
-    params:set('click', val)
-    return 'click ' .. val
-  end,
-  ['kickRamp'] = function(val)
-    params:set('kickRamp', val)
-    return 'kick ramp ' .. val
-  end,
-  ['drumsMonitorGain'] = function(val)
-    params:set('drumsMonitorGain', val)
-    return 'drums monitor ' .. val
-  end,
-  ['monitor'] = function(val)
-    params:set('monitor', val)
-    return 'monitor ' .. val
-    end,
-  ['amp'] = function(val)
-    params:set('amp', val)
-    return 'amp ' .. val
-  end,
-}
 
 function midiEvent(data)
   -- tab.print(midi.to_msg(data))
@@ -148,14 +72,13 @@ function midiEvent(data)
     local index = d.note - 36
     -- engine.noteOff(index)
   elseif d.type == 'cc' then
-    local handler = ccAkaiMapping[d.cc]
-    if handler ~= nil and ccHandlers[handler] ~= nil then
-      local msg = ccHandlers[handler](d.val / 127)
+    local handled, msg = BGMidi.handleCCMPD218(MPD218, params, d.cc, d.val)
+    if handled then
       redraw(msg)
     end
   end
 end
 
 function redraw(msg)
-  Hexagon:draw(msg, ccAkaiMapping)
+  Hexagon:drawFancy(MPD218, msg)
 end
