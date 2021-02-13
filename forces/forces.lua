@@ -1,68 +1,44 @@
 -- forces
 
 local BGUtil = include('bitgraves/common/bgutil')
+local BGMidi = include('bitgraves/common/bgmidi')
 local Hexagon = include('bitgraves/common/hexagon')
 
 engine.name = 'Forces'
 mid = nil
 
 local indexOffset = 2
+local MPD218
 
 function init()
-  audio:rev_off() -- no system reverb
-  audio:pitch_off() -- no system pitch analysis
-  audio:monitor_mono() -- expect only channel 1 input
-  audio.level_monitor(0) -- just reset for now...
+  BGUtil.configureSystemStuff()
 
-  params:add_control("peaks", "peaks", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("peaks", function(x)
-    engine.peaks(util.linlin(0, 1, 32, 1, x))
-  end)
-  
-  params:add_control("seqDur", "seqDur", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("seqDur", function(x)
-    engine.seqDur(util.linlin(0, 1, 0.05, 0.17, x))
-  end)
-  
-  params:add_control("noise", "noise", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("noise", function(x)
-    engine.noise(util.linlin(0, 1, 0, 0.1, x))
-  end)
-  
-  params:add_control("ana", "ana", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("ana", function(x)
-    engine.ana(x)
-  end)
+  BGUtil.addEngineControlParam(params, { id = "peaks", min = 32, max = 1 })
+  BGUtil.addEngineControlParam(params, { id = "seqDur", min = 0.05, max = 0.17 })
+  BGUtil.addEngineControlParam(params, { id = "noise", max = 0.1 })
+  BGUtil.addEngineControlParam(params, { id = "freqbase", min = 1, max = 2 })
+  BGUtil.addEngineControlParam(params, { id = "freqPowerBase", min = 1, max = 2 })
+  BGUtil.addEngineControlParam(params, { id = "kickGain" })
+  BGUtil.addEngineControlParam(params, { id = "noiseGain" })
+  BGUtil.addEngineControlParam(params, { id = "amp" })
 
-  params:add_control("freqbase", "freqbase", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("freqbase", function(x)
-    engine.freqbase(util.linlin(0, 1, 1, 2, x))
-  end)
-  
-  params:add_control("freqPowerBase", "freqPowerBase", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("freqPowerBase", function(x)
-    engine.freqPowerBase(util.linlin(0, 1, 1, 2, x))
-  end)
-  
-  params:add_control("kickGain", "kickGain", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("kickGain", function(x)
-    engine.kickGain(x)
-  end)
-  
-  params:add_control("noiseGain", "noiseGain", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("noiseGain", function(x)
-    engine.noiseGain(x)
-  end)
-
-  params:add_control("amp", "amp", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("amp", function(x)
-    engine.amp(x)
-  end)
-  
   params:add_control("monitor", "monitor", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("monitor", function(x)
     audio.level_monitor(util.linlin(0, 1, 0, 0.7, x))
   end)
+  
+  MPD218 = BGMidi.newInputMappingMPD218({
+    [3] = 'peaks',
+    [9] = 'seqDur',
+    [12] = 'freqPowerBase',
+    [13] = 'freqbase',
+    [14] = 'monitor',
+    [15] = 'amp',
+    [16] = 'kickGain',
+    [17] = 'seqDur',
+    [18] = 'noiseGain',
+    [19] = 'noise',
+  })
   
   mid = midi.connect()
   mid.event = midiEvent
@@ -72,63 +48,6 @@ end
 function key(...)
   BGUtil.setlist_key('forces/forces', ...)
 end
-
--- mapping from Akai MPD218 knobs to param handlers
-local ccAkaiMapping = {
-  [3] = 'peaks',
-  [9] = 'seqDur',
-  [12] = 'freqPowerBase',
-  [13] = 'freqbase',
-  [14] = 'monitor',
-  [15] = 'amp',
-  [16] = 'kickGain',
-  [17] = 'seqDur',
-  [18] = 'noiseGain',
-  [19] = 'noise',
-}
-
-local ccHandlers = {
-  ['peaks'] = function(val)
-    params:set('peaks', val)
-    return 'peaks ' .. val
-  end,
-  ['seqDur'] = function(val)
-    params:set('seqDur', val)
-    return 'seq dur ' .. val
-  end,
-  ['noise'] = function(val)
-    params:set('noise', val)
-    return 'noise ' .. val
-  end,
-  ['ana'] = function(val)
-    params:set('ana', val)
-    return 'ana ' .. val
-  end,
-  ['freqbase'] = function(val)
-    params:set('freqbase', val)
-    return 'freq base ' .. val
-  end,
-  ['freqPowerBase'] = function(val)
-    params:set('freqPowerBase', val)
-    return 'power base ' .. val
-  end,
-  ['kickGain'] = function(val)
-    params:set('kickGain', val)
-    return 'kick ' .. val
-  end,
-  ['noiseGain'] = function(val)
-    params:set('noiseGain', val)
-    return 'snr ' .. val
-  end,
-  ['monitor'] = function(val)
-    params:set('monitor', val)
-    return 'monitor ' .. val
-    end,
-  ['amp'] = function(val)
-    params:set('amp', val)
-    return 'amp ' .. val
-  end,
-}
 
 function midiEvent(data)
   -- tab.print(midi.to_msg(data))
@@ -150,14 +69,13 @@ function midiEvent(data)
       engine.filterNoteOff(0)
     end
   elseif d.type == 'cc' then
-    local handler = ccAkaiMapping[d.cc]
-    if handler ~= nil and ccHandlers[handler] ~= nil then
-      local msg = ccHandlers[handler](d.val / 127)
+    local handled, msg = BGMidi.handleCCMPD218(MPD218, params, d.cc, d.val)
+    if handled then
       redraw(msg)
     end
   end
 end
 
 function redraw(msg)
-  Hexagon:draw(msg, ccAkaiMapping)
+  Hexagon:drawFancy(MPD218, msg)
 end
