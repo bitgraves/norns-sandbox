@@ -153,7 +153,7 @@ Engine_Linda : CroneEngine {
       sEffects.set(\amp, msg[1]);
     });
     this.addCommand("noteOffset", "f", {|msg|
-      bNoteOffset.set(msg[1].linlin(0, 1, -4, -24).round);
+      bNoteOffset.set(msg[1].round);
     });
     this.addCommand("filterCreep", "f", {|msg|
       bFilterCreep.set(msg[1]);
