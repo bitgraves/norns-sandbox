@@ -1,68 +1,48 @@
 -- marbles
 
 local BGUtil = include('bitgraves/common/bgutil')
+local BGMidi = include('bitgraves/common/bgmidi')
 local Hexagon = include('bitgraves/common/hexagon')
 local MusicUtil = require 'musicutil'
 
 engine.name = 'Marbles'
 mid = nil
+local MPD218
 
 function init()
-  audio:rev_off() -- no system reverb
-  audio:pitch_off() -- no system pitch analysis
-  audio:monitor_mono() -- expect only channel 1 input
-  audio.level_monitor(0) -- just reset for now...
+  BGUtil.configureSystemStuff()
   
-  params:add_control("lowMonitor", "lowMonitor", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("lowMonitor", function(x)
-    engine.lowMonitorLpf(util.linexp(0, 1, 100, 2000, x))
-    engine.lowMonitorAmp(x)
-  end)
-
-  params:add_control("carrierNoise", "carrierNoise", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("carrierNoise", function(x)
-    engine.carrierNoise(x)
-  end)
-  
-  params:add_control("ana", "ana", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("ana", function(x)
-    engine.ana(x)
-  end)
-  
-  params:add_control("lag", "lag", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("lag", function(x)
-    engine.lag(x)
-  end)
-  
-  params:add_control("freq", "freq", controlspec.new(110, 10000, 'exp', 1, 110, 'Hz'))
-  params:set_action("freq", function(x)
-    engine.freq(x)
-  end)
-  
-  params:add_control("spread", "spread", controlspec.new(1, 5, 'lin', 1, 1, ''))
-  params:set_action("spread", function(x)
-    engine.spread(x)
-  end)
-  
-  params:add_control("bend", "bend", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("bend", function(x)
-    engine.bend(util.linlin(0, 1, 0, -24, x))
-  end)
-  
-  params:add_control("sustain", "sustain", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("sustain", function(x)
-    engine.sustain(util.linlin(0, 1, 0.9, 0.1, x))
-  end)
-
-  params:add_control("amp", "amp", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("amp", function(x)
-    engine.amp(x)
-  end)
+  BGUtil.addEngineControlParam(params, {
+    id = "lowMonitor",
+    action = function(x)
+      engine.lowMonitorLpf(util.linexp(0, 1, 100, 2000, x))
+      engine.lowMonitorAmp(x)
+    end,
+  })
+  BGUtil.addEngineControlParam(params, { id = "carrierNoise" })
+  BGUtil.addEngineControlParam(params, { id = "ana" })
+  BGUtil.addEngineControlParam(params, { id = "lag" })
+  BGUtil.addEngineControlParam(params, { id = "freq", controlspec = controlspec.new(110, 10000, 'exp', 1, 110, 'Hz') })
+  BGUtil.addEngineControlParam(params, { id = "spread", controlspec = controlspec.new(1, 5, 'lin', 1, 1, '') })
+  BGUtil.addEngineControlParam(params, { id = "bend", max = -24 })
+  BGUtil.addEngineControlParam(params, { id = "sustain", min = 0.9, max = 0.1 })
+  BGUtil.addEngineControlParam(params, { id = "amp" })
   
   params:add_control("monitor", "monitor", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("monitor", function(x)
     audio.level_monitor(x)
   end)
+  
+  MPD218 = BGMidi.newInputMappingMPD218({
+    [3] = 'lowMonitor',
+    [9] = 'bend',
+    [12] = 'ana',
+    [13] = 'lag',
+    [14] = 'monitor',
+    [15] = 'amp',
+    [17] = 'sustain',
+    [19] = 'carrierNoise',
+  })
   
   mid = midi.connect()
   mid.event = midiEvent
@@ -72,54 +52,6 @@ end
 function key(...)
   BGUtil.setlist_key('marbles/marbles', ...)
 end
-
--- mapping from Akai MPD218 knobs to param handlers
-local ccAkaiMapping = {
-  [3] = 'lowMonitor',
-  [9] = 'bend',
-  [12] = 'ana',
-  [13] = 'lag',
-  [14] = 'monitor',
-  [15] = 'amp',
-  [17] = 'sustain',
-  [19] = 'carrierNoise',
-}
-
-local ccHandlers = {
-  ['lowMonitor'] = function(val)
-    params:set('lowMonitor', val)
-    local freq = util.linexp(0, 1, 100, 2000, val)
-    return 'lo monitor ' .. util.round(freq, 1) .. ' ' .. util.round(val, 0.01)
-  end,
-  ['bend'] = function(val)
-    params:set('bend', val)
-    return 'bend ' .. val
-  end,
-  ['sustain'] = function(val)
-    params:set('sustain', val)
-    return 'sustain ' .. val
-  end,
-  ['carrierNoise'] = function(val)
-    params:set('carrierNoise', val)
-    return 'carrier noise ' .. val
-  end,
-  ['ana'] = function(val)
-    params:set('ana', val)
-    return 'dig -> ana ' .. val
-  end,
-  ['lag'] = function(val)
-    params:set('lag', val)
-    return 'lag ' .. val
-  end,
-  ['monitor'] = function(val)
-    params:set('monitor', val)
-    return 'monitor ' .. val
-    end,
-  ['amp'] = function(val)
-    params:set('amp', val)
-    return 'amp ' .. val
-  end,
-}
 
 function midiEvent(data)
   -- tab.print(midi.to_msg(data))
@@ -138,14 +70,13 @@ function midiEvent(data)
     local index = d.note - 36
     engine.noteOff(index)
   elseif d.type == 'cc' then
-    local handler = ccAkaiMapping[d.cc]
-    if handler ~= nil and ccHandlers[handler] ~= nil then
-      local msg = ccHandlers[handler](d.val / 127)
+    local handled, msg = BGMidi.handleCCMPD218(MPD218, params, d.cc, d.val)
+    if handled then
       redraw(msg)
     end
   end
 end
 
 function redraw(msg)
-  Hexagon:draw(msg, ccAkaiMapping)
+  Hexagon:drawFancy(MPD218, msg)
 end

@@ -83,20 +83,25 @@ function BGUtil.configureSystemStuff()
 end
 
 function BGUtil.addEngineControlParam(params, args)
-  local spec
+  local spec, action
   if args.controlspec then
     spec = args.controlspec
   else
     local min, max = args.min or 0, args.max or 1
     spec = controlspec.new(min, max, args.warp or 'lin', 0, 0, args.units or '')
   end
+  if args.action then
+    action = args.action
+  else
+    action = function(x)
+      engine[args.id](x)
+    end
+  end
   params:add({
     id = args.id,
     type = "control",
     controlspec = spec,
-    action = function(x)
-      engine[args.id](x)
-    end,
+    action = action,
   })
 end
 
