@@ -143,7 +143,7 @@ Engine_Processing : CroneEngine {
       sEffects.set(\amp, msg[1]);
     });
     this.addCommand("noteOffset", "f", {|msg|
-      bNoteOffset.set(msg[1].linlin(0, 1, 0, -24).round);
+      bNoteOffset.set(msg[1].round);
     });
     this.addCommand("pShudder", "f", {|msg|
       gPShudder = msg[1];
