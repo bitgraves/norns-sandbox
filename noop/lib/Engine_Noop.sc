@@ -1,8 +1,9 @@
 Engine_Noop : CroneEngine {
   var <sNoise, <sPerc;
-  var pKick, pBlip1, pBlip2, pSnare;
+  var pKick, pBd, pBlip1, pBlip2, pSnare;
   var bNoiseGate, bPerc;
   var gKkGain = 0, gBlipGain = 1, gRampKick = 0;
+  var gKickRepeats = 1;
   var mOut, mapping, initMidiPatterns, stopMidiPatterns;
 
   *new { arg context, doneCallback;
@@ -22,19 +23,29 @@ Engine_Noop : CroneEngine {
     context.server.sync;
     
     initMidiPatterns = {
+      pBd = Pchain(
+        Ppar([
+          Pbind(
+            \midicmd, \noteOn,
+            \chan, mapping.chan,
+            \note, mapping.bd,
+            \amp, 1 * Pfunc({ gKkGain }),
+          ),
+        ]),
+        Pbind(
+          \type, \midi,
+          \midiout, mOut,
+          \dur, 8,
+        ),
+      ).play(TempoClock.default);
+      
       pBlip1 = Pchain(
         Ppar([
           Pbind(
             \midicmd, \noteOn,
             \chan, mapping.chan,
             \note, mapping.htc,
-            \amp, Pn(
-              Pseq([
-                Pn(0, 6),
-                Prand([1, 0.5, 0.25, 0], 4),
-                Pn(0, 2),
-              ]),
-            ) * Pfunc({ gBlipGain }),
+            \amp, 1 * Pfunc({ gBlipGain }),
           ),
           Pbind(
             \midicmd, \control,
@@ -48,7 +59,7 @@ Engine_Noop : CroneEngine {
         Pbind(
           \type, \midi,
           \midiout, mOut,
-          \dur, 0.25,
+          \dur, Pn(Pwrand([1, 0.5], [0.95, 0.05])),
         ),
       ).play(TempoClock.default);
       
@@ -104,10 +115,13 @@ Engine_Noop : CroneEngine {
         \n, Pgate(Pwhite(0, 24), key: \oct),
         \oct, Pn(Pwrand([0, 1], [0.9, 0.1])),
         \dur, Pn(
-          Pwrand([
-            Pseq([0.5, 0.5, 2]),
-            Pseq([0.75, 0.75, 1.5]),
-          ], [0.95, 0.05]),
+          Pconst(
+            8,
+            Pfin(
+              { gKickRepeats },
+              Prand([0.75, 0.5], inf),
+            ),
+          ),
         ),
         \attack, Pn(
           Pseq([
@@ -136,6 +150,7 @@ Engine_Noop : CroneEngine {
     };
     
     stopMidiPatterns = {
+      pBd.stop;
       pKick.stop;
       pBlip1.stop;
       pBlip2.stop;
@@ -280,6 +295,9 @@ Engine_Noop : CroneEngine {
     });
     this.addCommand("click", "f", {|msg|
       gBlipGain = msg[1];
+    });
+    this.addCommand("kickRepeats", "f", {|msg|
+      gKickRepeats = msg[1].round;
     });
     this.addCommand("drumsMonitorGain", "f", {|msg|
       sPerc.set(\monitorGain, msg[1]);

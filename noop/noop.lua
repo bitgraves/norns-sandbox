@@ -22,6 +22,7 @@ function init()
   BGUtil.addEngineControlParam(params, { id = "duck" })
   BGUtil.addEngineControlParam(params, { id = "drumsMonitorGain", min = 1, max = 2 })
   BGUtil.addEngineControlParam(params, { id = "kickRamp" })
+  BGUtil.addEngineControlParam(params, { id = "kickRepeats", min = 1, max = 12 })
   BGUtil.addEngineControlParam(params, { id = "amp" })
 
   params:add_control("monitor", "monitor", controlspec.new(0, 1, 'lin', 0, 0, ''))
@@ -37,7 +38,7 @@ function init()
     [14] = 'monitor',
     [15] = 'amp',
     [16] = 'kick',
-    [17] = 'kickRamp',
+    [17] = 'kickRepeats',
     [18] = 'drumsMonitorGain',
   })
   
