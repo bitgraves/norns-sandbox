@@ -1,45 +1,41 @@
 -- stux
 
 local BGUtil = include('bitgraves/common/bgutil')
+local BGMidi = include('bitgraves/common/bgmidi')
 local Hexagon = include('bitgraves/common/hexagon')
 
 engine.name = 'Stux'
 mid = nil
+local MPD218
 
 function init()
-  audio:rev_off() -- no system reverb
-  audio:pitch_off() -- no system pitch analysis
-  audio:monitor_mono() -- expect only channel 1 input
+  BGUtil.configureSystemStuff()
 
-  params:add_control("amp", "amp", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("amp", function(x)
-    engine.amp(x)
-  end)
-  
-  params:add_control("percAmp", "percAmp", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("percAmp", function(x)
-    engine.percAmp(x)
-  end)
-
-  params:add_control("rhythm", "rhythm", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("rhythm", function(x)
-    engine.rhythm(math.floor(util.linlin(0, 1, 0, 20, x)))
-  end)
-  
-  params:add_control("attack", "attack", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("attack", function(x)
-    engine.attack(util.linlin(0, 1, 0.01, 0.1, x))
-  end)
-  
-  params:add_control("release", "release", controlspec.new(0, 1, 'lin', 0, 0, ''))
-  params:set_action("release", function(x)
-    engine.release(util.linlin(0, 1, 0.01, 3, x))
-  end)
+  BGUtil.addEngineControlParam(params, { id = "amp" })
+  BGUtil.addEngineControlParam(params, { id = "percAmp" })
+  BGUtil.addEngineControlParam(params, {
+    id = "rhythm",
+    max = 20,
+    action = function(x)
+      engine.rhythm(math.floor(x))
+    end,
+  })
+  BGUtil.addEngineControlParam(params, { id = "attack", min = 0.01, max = 0.1 })
+  BGUtil.addEngineControlParam(params, { id = "release", min = 0.01, max = 3 })
   
   params:add_control("monitor", "monitor", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("monitor", function(x)
     audio.level_monitor(x)
   end)
+  
+  MPD218 = BGMidi.newInputMappingMPD218({
+    [3] = 'percAmp',
+    [9] = 'rhythm',
+    [12] = 'attack',
+    [13] = 'release',
+    [14] = 'monitor',
+    [15] = 'amp',
+  })
   
   mid = midi.connect()
   mid.event = midiEvent
@@ -58,43 +54,6 @@ function key(...)
   BGUtil.setlist_key('stux/stux', ...)
 end
 
--- mapping from Akai MPD218 knobs to param handlers
-local ccAkaiMapping = {
-  [3] = 'percAmp',
-  [9] = 'rhythm',
-  [12] = 'attack',
-  [13] = 'release',
-  [14] = 'monitor',
-  [15] = 'amp',
-}
-
-local ccHandlers = {
-  ['percAmp'] = function(val)
-      params:set('percAmp', val)
-      return 'perc amp ' .. val
-    end,
-  ['rhythm'] = function(val)
-      params:set('rhythm', val)
-      return 'rhythm ' .. val
-    end,
-  ['attack'] = function(val)
-      params:set('attack', val)
-      return 'attack ' .. val
-    end,
-  ['release'] = function(val)
-      params:set('release', val)
-      return 'release ' .. val
-    end,
-  ['monitor'] = function(val)
-      params:set('monitor', val)
-      return 'monitor ' .. val
-    end,
-  ['amp'] = function(val)
-      params:set('amp', val)
-      return 'amp ' .. val
-    end,
-}
-
 function midiEvent(data)
   -- tab.print(midi.to_msg(data))
   local d = midi.to_msg(data)
@@ -105,14 +64,13 @@ function midiEvent(data)
   elseif d.type == 'note_off' then
     engine.trig(0);
   elseif d.type == 'cc' then
-    local handler = ccAkaiMapping[d.cc]
-    if handler ~= nil and ccHandlers[handler] ~= nil then
-      local msg = ccHandlers[handler](d.val / 127)
+    local handled, msg = BGMidi.handleCCMPD218(MPD218, params, d.cc, d.val)
+    if handled then
       redraw(msg)
     end
   end
 end
 
 function redraw(msg)
-  Hexagon:draw(msg, ccAkaiMapping)
+  Hexagon:drawFancy(MPD218, msg)
 end
