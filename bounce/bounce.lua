@@ -90,6 +90,6 @@ function redraw(msg)
     screen.text('???????')
     screen.update()
   else
-    Hexagon:drawFancy(MPD218, msg)
+    Hexagon:draw(MPD218, msg)
   end
 end

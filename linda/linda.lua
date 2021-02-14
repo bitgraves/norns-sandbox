@@ -57,5 +57,5 @@ function midiEvent(data)
 end
 
 function redraw(msg)
-  Hexagon:drawFancy(MPD218, msg)
+  Hexagon:draw(MPD218, msg)
 end
