@@ -30,6 +30,7 @@ function init()
   })
   BGUtil.addEngineControlParam(params, { id = "noise", max = 0.4 })
   BGUtil.addEngineControlParam(params, { id = "lpf", min = 60, max = 20000, warp = 'exp' })
+  BGUtil.addEngineControlParam(params, { id = "release", min = -10, max = -2, warp = 'exp', action = function(x) engine.release(x * -1) end })
   
   params:add_control("monitor", "monitor", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("monitor", function(x)
@@ -37,13 +38,14 @@ function init()
   end)
   
   MPD218 = BGMidi.newInputMappingMPD218({
-    [3] = 'phaseDrift',
-    [9] = 'envDepth',
+    [3] = 'release',
+    [16] = 'phaseDrift',
+    [9] = 'noise',
     [12] = 'stableFreq',
     [13] = 'lpf',
     [14] = 'monitor',
     [15] = 'amp',
-    [17] = 'noise',
+    [17] = 'envDepth',
   })
   
   mid = midi.connect()
@@ -70,7 +72,7 @@ function midiEvent(data)
   if d.type == 'note_on' then
     local index = d.note - 36
     local minCombFreq = 55 * MusicUtil.interval_to_ratio(-4)
-    local triFreq = 13.75 * MusicUtil.interval_to_ratio(-4 + index)
+    local triFreq = 13.75 * 0.5 * MusicUtil.interval_to_ratio(index)
     local combFreq = minCombFreq * MusicUtil.interval_to_ratio(index)
     engine.initialFreq(triFreq)
     engine.combFreq(combFreq)

@@ -1,6 +1,6 @@
 Engine_Bounce2 : CroneEngine {
-  var <sBounce, <sFx, <sTail, <sKick;
-  var bFx, bKickTrig;
+  var <sBounce, <sFx, <sTail, <sKick, <sKick2;
+  var bFx, bKickTrig, bKick2Trig;
   var minCombFreq;
 
   *new { arg context, doneCallback;
@@ -12,10 +12,11 @@ Engine_Bounce2 : CroneEngine {
 
     bFx = Bus.audio(context.server, 2);
     bKickTrig = Bus.control(context.server, 1);
+    bKick2Trig = Bus.control(context.server, 1);
     minCombFreq = (55 * -4.midiratio);
     
     SynthDef.new(\foldBounce,
-      { arg inBus = 2, outBus = 0, outTrigBus, amp = 1, lpfFreq = 60, inTrig = 0, initialFreq = 100, finalFreq = 0.5, combFreq = 43.65, phaseDrift = 0, noise = 0;
+      { arg inBus = 2, outBus = 0, outTrigBus, amp = 1, release = 10, lpfFreq = 60, inTrig = 0, initialFreq = 100, finalFreq = 0.5, combFreq = 43.65, phaseDrift = 0, noise = 0;
         var in = In.ar(inBus, 1);
         var thru = [
           in,
@@ -28,7 +29,7 @@ Engine_Bounce2 : CroneEngine {
         ];
         var delaySweep = Sweep.ar(
           inTrig,
-          1.0 / 5.0
+          1.0 / release
         ).linexp(0, 1, initialFreq.reciprocal, finalFreq.reciprocal, \minmax);
         var voices = Mix.ar([
           Braid.ar(in: thru, shift: 2.0, delayLength: delaySweep),
@@ -42,7 +43,10 @@ Engine_Bounce2 : CroneEngine {
             rate: phaseDrift,
           ),
         );
-        var filter = RLPF.ar(fs, lpfFreq).tanh;
+        var filter = RHPF.ar(
+          RLPF.ar(fs, lpfFreq),
+          40 + EnvGen.kr(Env.perc(attackTime: 0.001), inTrig, levelScale: 80)
+        ).tanh;
         // TODO: if it goes too high or too low, fold to zero
         var delayFreq = delaySweep.reciprocal.clip(0, 15);
         var kkFreq = if(delayFreq >= 15, 0, delayFreq);
@@ -75,7 +79,7 @@ Engine_Bounce2 : CroneEngine {
           gate,
           levelScale: envDepth,
         );
-        var sound = DriveNoise.ar(in, 1, 1.5);
+        var sound = in;// DriveNoise.ar(in, 1, 1.5);
         sound = SoftClipper4.ar(sound);
         Out.ar(outBus, sound * env * amp);
       }
@@ -124,6 +128,11 @@ Engine_Bounce2 : CroneEngine {
       \trigBus, bKickTrig,
       \outBus, bFx],
     context.xg);
+    sKick2 = Synth.new(\foldBump, [
+      \trigBus, bKick2Trig,
+      \release, 2,
+      \outBus, context.out_b.index],
+    context.xg);
 
     // commands
 
@@ -153,11 +162,15 @@ Engine_Bounce2 : CroneEngine {
     this.addCommand("lpf", "f", {|msg|
       sBounce.set(\lpfFreq, msg[1].clip(60, 20000));
     });
+    this.addCommand("release", "f", {|msg|
+      sBounce.set(\release, msg[1].clip(0.1, 60));
+    });
     this.addCommand("gate", "i", {|msg|
       var param = msg[1];
       sBounce.set(\inTrig, param);
       sFx.set(\gate, param);
       sTail.set(\gate, param);
+      bKick2Trig.set(param);
     });
   }
 
@@ -168,6 +181,7 @@ Engine_Bounce2 : CroneEngine {
     sBounce.free;
     bFx.free;
     bKickTrig.free;
+    bKick2Trig.free;
   }
 
 } 
