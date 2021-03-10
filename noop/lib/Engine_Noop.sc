@@ -1,9 +1,8 @@
 Engine_Noop : CroneEngine {
   var <sNoise, <sPerc;
-  var pKick, pBd, pBlip1, pBlip2, pSnare;
+  var pKick, pBd, pSnare;
   var bNoiseGate, bPerc;
-  var gKkGain = 0, gBlipGain = 1, gRampKick = 0;
-  var gKickRepeats = 1;
+  var gKkGain = 0, gRampKick = 0;
   var mOut, mapping, initMidiPatterns, stopMidiPatterns;
 
   *new { arg context, doneCallback;
@@ -13,7 +12,7 @@ Engine_Noop : CroneEngine {
   alloc {
     "Noop alloc".postln;
 
-    TempoClock.tempo = 1.8;
+    TempoClock.tempo = 1.5;
     bNoiseGate = Bus.control(context.server, 1);
     bPerc = Bus.audio(context.server, 1);
     
@@ -23,7 +22,7 @@ Engine_Noop : CroneEngine {
     context.server.sync;
     
     initMidiPatterns = {
-      pBd = Pchain(
+      /* pBd = Pchain(
         Ppar([
           Pbind(
             \midicmd, \noteOn,
@@ -37,53 +36,7 @@ Engine_Noop : CroneEngine {
           \midiout, mOut,
           \dur, 8,
         ),
-      ).play(TempoClock.default);
-      
-      pBlip1 = Pchain(
-        Ppar([
-          Pbind(
-            \midicmd, \noteOn,
-            \chan, mapping.chan,
-            \note, mapping.htc,
-            \amp, 1 * Pfunc({ gBlipGain }),
-          ),
-          Pbind(
-            \midicmd, \control,
-            \chan, mapping.controlChan,
-            \ctlNum, mapping.hh_tune,
-            \control, Pn(
-              Pwrand([127, 92], [0.8, 0.2])
-            ),
-          ),
-        ]),
-        Pbind(
-          \type, \midi,
-          \midiout, mOut,
-          \dur, Pn(Pwrand([1, 0.5], [0.95, 0.05])),
-        ),
-      ).play(TempoClock.default);
-      
-      pBlip2 = Pchain(
-        Ppar([
-          Pbind(
-            \midicmd, \noteOn,
-            \chan, mapping.chan,
-            \note, Pn(
-              Pseq([mapping.hh, mapping.oh, mapping.oh]),
-            ),
-            \amp, Pn(
-              Pseq([1, 0.1, 0.1]),
-            ) * Pfunc({ gBlipGain }),
-          ),
-        ]),
-        Pbind(
-          \type, \midi,
-          \midiout, mOut,
-          \dur, Pn(
-            Pseq([0.27, 0.25, 0.23])
-          )
-        ),
-      ).play(TempoClock.default);
+      ).play(TempoClock.default); */
       
       pSnare = Pchain(
         Ppar([
@@ -96,7 +49,7 @@ Engine_Noop : CroneEngine {
                 Pn(0, 5),
                 Pseq([1, 0, 1, 0, 0.5, 0.25]),
               ]),
-            ) * Pfunc({ gBlipGain }),
+            ),
           ),
         ]),
         Pbind(
@@ -115,32 +68,20 @@ Engine_Noop : CroneEngine {
         \n, Pgate(Pwhite(0, 24), key: \oct),
         \oct, Pn(Pwrand([0, 1], [0.9, 0.1])),
         \dur, Pn(
-          Pconst(
-            8,
-            Pfin(
-              { gKickRepeats },
-              Prand([0.75, 0.5], inf),
-            ),
-          ),
-        ),
-        \attack, Pn(
           Pseq([
-            0.01,
-            Pif(
-              Pfunc({ gRampKick >= 1 }),
-              Prand([0.01, 0.05, 0.1, 0.25]),
-              0.01
-            ),
-            0.01
+            0.75,
+            Prand([Pseq([1.25, 0.5]), Pseq([1.3, 0.45])]),
+            1
           ]),
         ),
+        \attack, 0.01,
         \release, Pn(
-          Pseq([0.5, 0.5, 1.5]),
+          Pseq([1, 1, 0.5, 1]),
         ),
         \amp, Pn(
           Pseq([
-            Pwrand([0.9, 0], [0.9, 0.1]),
-            Pwrand([0.85, 0.5, 0], [0.8, 0.1, 0.1]),
+            Pwrand([0.9, 0.8], [0.9, 0.1]),
+            Pwrand([0.85, 0.5, 0.5], [0.8, 0.1, 0.1]),
             1
           ]),
         ) * Pfunc({ gKkGain }),
@@ -150,10 +91,8 @@ Engine_Noop : CroneEngine {
     };
     
     stopMidiPatterns = {
-      pBd.stop;
+      // pBd.stop;
       pKick.stop;
-      pBlip1.stop;
-      pBlip2.stop;
       pSnare.stop;
     };
     
@@ -175,7 +114,13 @@ Engine_Noop : CroneEngine {
         ).tanh;
         var mix = Mix.ar([
           osc, // bass
-          LPF.ar(WhiteNoise.ar(mul: 0.7), XLine.ar(8000, 200, 0.01)), //click
+          LPF.ar(WhiteNoise.ar(mul: 0.7), XLine.ar(8000, 100, 0.01)), //click
+          SoftClipAmp4.ar(
+            Mix.ar([
+              SinOsc.ar(440 * -25.midiratio, mul: 0.25),
+              SinOsc.ar(440 * -37.midiratio, mul: 0.5),
+            ])
+          ),
         ]);
         var env = EnvGen.ar(
           Env.perc(attack, release),
@@ -187,7 +132,7 @@ Engine_Noop : CroneEngine {
     ).add;
 
     SynthDef.new(\bgnNoise,
-      { | inBus = 2, outBus = 0, clip = 0, gateBus = 0, amp = 0, duckAmount = 0, rez = 0, harm = 1, poly = 0 |
+      { | inBus = 2, outBus = 0, clip = 1, gateBus = 0, amp = 0, duckAmount = 0, rez = 0, harm = 1, poly = 0 |
         var in = In.ar(inBus, 1);
         var gate = In.kr(gateBus, 1);
     
@@ -226,10 +171,11 @@ Engine_Noop : CroneEngine {
     ).add;
     
     SynthDef.new(\bgnPerc,
-      { |inBus = 2, monitorBus = 2, monitorGain = 1, outBus = 0, gain = 1, noise = 0.1|
+      { |inBus = 2, monitorBus = 2, monitorGain = 1, outBus = 0, gain = 1, lpf = 80|
         var in = In.ar(inBus, 1);
         var monitor = In.ar(monitorBus, 1) * monitorGain;
         var sound = Mix.ar([in, monitor]); //DriveNoise.ar(in, noise, 2);
+        sound = RLPF.ar(sound, lpf.clip(80, 20000));
         Out.ar(outBus, Pan2.ar(sound * gain, 0));
       }
     ).add;
@@ -293,17 +239,14 @@ Engine_Noop : CroneEngine {
     this.addCommand("kick", "f", {|msg|
       gKkGain = msg[1];
     });
-    this.addCommand("click", "f", {|msg|
-      gBlipGain = msg[1];
-    });
-    this.addCommand("kickRepeats", "f", {|msg|
-      gKickRepeats = msg[1].round;
-    });
     this.addCommand("drumsMonitorGain", "f", {|msg|
       sPerc.set(\monitorGain, msg[1]);
     });
     this.addCommand("kickRamp", "f", {|msg|
       gRampKick = msg[1];
+    });
+    this.addCommand("percLpf", "f", {|msg|
+      sPerc.set(\lpf, msg[1]);
     });
   }
 

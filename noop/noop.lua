@@ -14,15 +14,14 @@ function init()
   BGMidi.sendMapping("tanzbar", engine.addMidiMapping)
   
   BGUtil.addEngineControlParam(params, { id = "rez" })
-  BGUtil.addEngineControlParam(params, { id = "clip" })
+  -- BGUtil.addEngineControlParam(params, { id = "clip" })
   BGUtil.addEngineControlParam(params, { id = "polyNoise" })
   BGUtil.addEngineControlParam(params, { id = "duck" })
   BGUtil.addEngineControlParam(params, { id = "kick" })
-  BGUtil.addEngineControlParam(params, { id = "click", max = 2 })
   BGUtil.addEngineControlParam(params, { id = "duck" })
   BGUtil.addEngineControlParam(params, { id = "drumsMonitorGain", min = 1, max = 2 })
   BGUtil.addEngineControlParam(params, { id = "kickRamp" })
-  BGUtil.addEngineControlParam(params, { id = "kickRepeats", min = 1, max = 12 })
+  BGUtil.addEngineControlParam(params, { id = "percLpf", min = 80, max = 20000, warp = 'exp' })
   BGUtil.addEngineControlParam(params, { id = "amp" })
 
   params:add_control("monitor", "monitor", controlspec.new(0, 1, 'lin', 0, 0, ''))
@@ -32,13 +31,13 @@ function init()
   
   MPD218 = BGMidi.newInputMappingMPD218({
     [3] = 'rez',
-    [9] = 'clip',
+    [9] = 'percLpf',
     [12] = 'polyNoise',
     [13] = 'duck',
     [14] = 'monitor',
     [15] = 'amp',
     [16] = 'kick',
-    [17] = 'kickRepeats',
+    -- [17] = 'clip',
     [18] = 'drumsMonitorGain',
   })
   
