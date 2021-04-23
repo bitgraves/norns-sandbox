@@ -25,7 +25,7 @@ function init()
   BGUtil.addEngineControlParam(params, {
     id = "stableFreq",
     min = 0.5,
-    max = 200 * MusicUtil.interval_to_ratio(-4),
+    max = 220 * MusicUtil.interval_to_ratio(-4),
     warp = 'exp',
   })
   BGUtil.addEngineControlParam(params, { id = "noise", max = 0.4 })
@@ -63,7 +63,7 @@ function enc(nEnc, delta)
 end
 
 function key(...)
-  BGUtil.setlist_key('bounce/bounce', ...)
+  BGUtil.setlist_key('bounce2/bounce2', ...)
 end
 
 function midiEvent(data)
