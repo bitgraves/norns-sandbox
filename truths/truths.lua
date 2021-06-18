@@ -51,6 +51,10 @@ function init()
   redraw()
 end
 
+function key(...)
+  BGUtil.setlist_key('truths/truths', ...)
+end
+
 function midiEvent(data)
   -- tab.print(midi.to_msg(data))
   local d = midi.to_msg(data)
