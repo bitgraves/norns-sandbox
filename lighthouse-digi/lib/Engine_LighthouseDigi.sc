@@ -294,6 +294,9 @@ Engine_LighthouseDigi : CroneEngine {
     sFilter.free;
     sPerc.free;
     pVowel.stop;
+    pClap.stop;
+    pClick.stop;
+    pKick.stop;
     bModulator.free;
     bTrig.free;
   }
