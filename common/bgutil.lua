@@ -5,10 +5,9 @@ local Script = require 'script'
 BGUtil = {}
 
 local setlist = {
-  'truths/truths',
-  'bounce2/bounce2',
+  'hangs/hangs',
+  'baaka/baaka',
   'lighthouse-digi/lighthouse-digi',
-  'processing/processing',
   'retina/retina',
   'baikal/baikal',
 }
