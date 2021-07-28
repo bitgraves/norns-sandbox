@@ -55,22 +55,24 @@ Engine_LighthouseDigi : CroneEngine {
           levelScale: 1 - sustain,
           levelBias: sustain,
         );
-  
+
         var v1 = Vowel(\i, \bass);
         var v2 = Vowel(\a, \bass);
         // var v3 = Vowel(\a, \tenor);
         var v = v1.blend(v2, (vowel + SinOsc.kr(0.2, mul: 0.35 * env)).fold(0, 1));
 
-      var sound = DriveNoise.ar(in, noise, multi: 1.5);
-      sound = Mix.ar([
-        sound * inAmp,
-        Mix.ar(Resonz.ar(
-          (sound * 3).clip + WhiteNoise.ar(0.05),
-          freq: v.freqs * vowelScale,
-          bwr: v.rqs,
-          mul: v.amps
-        )) * wvAmp * 10
-      ]);
+        var sound = DriveNoise.ar(in, noise, multi: 1.5);
+        
+        sound = Mix.ar([
+          sound * inAmp,
+          Mix.ar(Resonz.ar(
+            (sound * 3).clip + WhiteNoise.ar(0.1),
+            freq: v.freqs * vowelScale,
+            bwr: v.rqs,
+            mul: v.amps
+          )) * wvAmp * 10
+        ]);
+        sound = Mix.ar(sound);
 
         Out.ar(outBus, sound);
       }
@@ -224,7 +226,7 @@ Engine_LighthouseDigi : CroneEngine {
     ).add;
 
     SynthDef.new(\bgfPerc,
-      { |inBus = 2, outBus = 0, gain = 1, noise = 0.1|
+      { |inBus = 2, outBus = 0, gain = 0.9, noise = 0.1|
         var in = In.ar(inBus, 1);
         var sound = DriveNoise.ar(in, noise, 2);
         Out.ar(outBus, Pan2.ar(sound * gain, 0));

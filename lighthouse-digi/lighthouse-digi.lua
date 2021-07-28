@@ -19,7 +19,7 @@ function init()
   BGUtil.addEngineControlParam(params, { id = "ana" })
   BGUtil.addEngineControlParam(params, { id = "basis", max = 16 })
   BGUtil.addEngineControlParam(params, { id = "kick" })
-  BGUtil.addEngineControlParam(params, { id = "click", max = 2 })
+  BGUtil.addEngineControlParam(params, { id = "click", max = 2.2 })
   BGUtil.addEngineControlParam(params, { id = "clap" })
   BGUtil.addEngineControlParam(params, { id = "amp" })
   
