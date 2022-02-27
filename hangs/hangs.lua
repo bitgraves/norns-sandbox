@@ -22,8 +22,8 @@ function init()
   })
   BGUtil.addEngineControlParam(params, {
     id = "pulseWidth",
-    min = -0.99,
-    max = -0.6,
+    min = -0.995,
+    max = -0.95,
     action = function(x) engine.pulseWidth(x * -1) end
   })
   BGUtil.addEngineControlParam(params, { id = "kick" })
@@ -38,6 +38,7 @@ function init()
   
   MPD218 = BGMidi.newInputMappingMPD218({
     [3] = 'sixthLevel',
+    [9] = 'kick', -- redundant but useful if only using kick
     [12] = 'wob',
     [13] = 'pulseWidth',
     [14] = 'monitor',

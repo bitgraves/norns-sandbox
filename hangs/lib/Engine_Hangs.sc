@@ -47,7 +47,7 @@ Engine_Hangs : CroneEngine {
         );
   
         var snd = Mix.ar([
-          sixth  * sixthLevel,
+          LPF.ar(sixth, sixthLevel.linexp(0, 1, 100, 18000)),
           carrier
         ]);
         snd = snd * EnvGen.kr(Env.triangle(wob), Impulse.kr(1 / wob));
