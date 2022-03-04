@@ -24,6 +24,7 @@ function init()
     max = 1,
   })
   BGUtil.addEngineControlParam(params, { id = "amp" })
+  BGUtil.addEngineControlParam(params, { id = "samp", max = 2 })
   
   params:add_control("monitor", "monitor", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("monitor", function(x)
@@ -34,6 +35,7 @@ function init()
     [3] = 'vowel',
     [9] = 'scale',
     [12] = 'harmonic',
+    [13] = 'samp',
     [14] = 'monitor',
     [15] = 'amp',
   })

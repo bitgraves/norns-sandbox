@@ -1,6 +1,7 @@
 Engine_Murmur : CroneEngine {
   var bFx;
-  var sVox, sFx;
+  var sVox, sSamp, sFx;
+  var bufSample;
 
   *new { arg context, doneCallback;
     ^super.new(context, doneCallback);
@@ -10,6 +11,7 @@ Engine_Murmur : CroneEngine {
     "Murmur alloc".postln;
 
     bFx = Bus.audio(context.server, 2);
+    bufSample = Buffer.read(context.server, "/home/we/dust/code/bitgraves/samples/20220304-yt-philipkdick.wav");
 
     context.server.sync;
 
@@ -43,6 +45,11 @@ Engine_Murmur : CroneEngine {
         Out.ar(outBus, Pan2.ar(sound, pan) * env * amp);
       }
     ).add;
+    
+    SynthDef.new(\mmrSamp, { |out = 0, bufnum, amp = 0|
+      var sig = PlayBuf.ar(2, bufnum, BufRateScale.kr(bufnum), loop: 1.0);
+      Out.ar(out, sig * amp);
+    }).add;
   
     SynthDef.new(\mmrFx,
       { arg inBus = 2, outBus = 0, gate = 0, envDepth = 1, amp = 0;
@@ -59,6 +66,10 @@ Engine_Murmur : CroneEngine {
     context.xg);
     sVox = Synth.new(\mmrVox, [
       \inBus, context.in_b[0].index,
+      \outBus, bFx],
+    context.xg);
+    sSamp = Synth.new(\mmrSamp, [
+      \bufnum, bufSample,
       \outBus, bFx],
     context.xg);
       
@@ -78,6 +89,9 @@ Engine_Murmur : CroneEngine {
     this.addCommand("morphFreq", "f", {|msg|
       sVox.set(\morphFreq, msg[1]);
     });
+    this.addCommand("samp", "f", {|msg|
+      sSamp.set(\amp, msg[1]);
+    });
 
     this.addCommand("noteOn", "i", {|msg|
       sVox.set(\trig, 1);
@@ -92,6 +106,8 @@ Engine_Murmur : CroneEngine {
   free {
     sVox.free;
     sFx.free;
+    sSamp.free;
+    bufSample.free;
     bFx.free;
   }
 
