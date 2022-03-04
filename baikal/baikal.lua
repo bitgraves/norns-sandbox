@@ -1,4 +1,5 @@
--- bounce
+-- baikal
+-- a very deep lake
 
 local BGUtil = include('bitgraves/common/bgutil')
 local BGMidi = include('bitgraves/common/bgmidi')
