@@ -24,7 +24,13 @@ function init()
     max = 1,
   })
   BGUtil.addEngineControlParam(params, { id = "amp" })
-  BGUtil.addEngineControlParam(params, { id = "samp", max = 2 })
+  BGUtil.addEngineControlParam(params, { id = "samp", max = 1 })
+  BGUtil.addEngineControlParam(params, {
+    id = "sampHpf",
+    min = 60,
+    max = 9000,
+    warp = 'exp',
+  })
   
   params:add_control("monitor", "monitor", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("monitor", function(x)
@@ -38,6 +44,7 @@ function init()
     [13] = 'samp',
     [14] = 'monitor',
     [15] = 'amp',
+    [16] = 'sampHpf',
   })
   
   mid = midi.connect()

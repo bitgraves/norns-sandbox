@@ -11,7 +11,7 @@ Engine_Murmur : CroneEngine {
     "Murmur alloc".postln;
 
     bFx = Bus.audio(context.server, 2);
-    bufSample = Buffer.read(context.server, "/home/we/dust/code/bitgraves/samples/20220304-yt-philipkdick.wav");
+    bufSample = Buffer.read(context.server, "/home/we/dust/code/bitgraves/samples/20220304-yt-drone-pesticide.wav");
 
     context.server.sync;
 
@@ -41,14 +41,16 @@ Engine_Murmur : CroneEngine {
   
         // remove some freqs for ENHANCEMENT
         sound = Mix.ar(BRF.ar(sound, vowel.linexp(0, 1, 220, 1760) * [1, 1.3, 1.6], 0.8, mul: 0.6));
+        sound = HPF.ar(sound, 100.0);
   
         Out.ar(outBus, Pan2.ar(sound, pan) * env * amp);
       }
     ).add;
     
-    SynthDef.new(\mmrSamp, { |out = 0, bufnum, amp = 0|
+    SynthDef.new(\mmrSamp, { |out = 0, bufnum, hpfFreq = 60, amp = 0|
       var sig = PlayBuf.ar(2, bufnum, BufRateScale.kr(bufnum), loop: 1.0);
-      Out.ar(out, sig * amp);
+      var hpf = HPF.ar(sig, hpfFreq.clip(60, 9000));
+      Out.ar(out, hpf * amp);
     }).add;
   
     SynthDef.new(\mmrFx,
@@ -91,6 +93,9 @@ Engine_Murmur : CroneEngine {
     });
     this.addCommand("samp", "f", {|msg|
       sSamp.set(\amp, msg[1]);
+    });
+    this.addCommand("sampHpf", "f", {|msg|
+      sSamp.set(\hpfFreq, msg[1]);
     });
 
     this.addCommand("noteOn", "i", {|msg|
