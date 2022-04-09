@@ -15,7 +15,7 @@ function init()
   BGUtil.configureSystemStuff()
 
   BGUtil.addEngineControlParam(params, { id = "vowel" })
-  BGUtil.addEngineControlParam(params, { id = "noise", max = 2 })
+  BGUtil.addEngineControlParam(params, { id = "noise", min= 0.2, max = 2 })
   BGUtil.addEngineControlParam(params, { id = "ana" })
   BGUtil.addEngineControlParam(params, { id = "basis", max = 16 })
   BGUtil.addEngineControlParam(params, { id = "kick" })

@@ -46,7 +46,7 @@ Engine_LighthouseDigi : CroneEngine {
     }).play(tPercClock);
 
     SynthDef.new(\bgfModulator,
-      { arg inBus = 2, outBus = 0, inAmp = 1, wvAmp = 0, index = 12, noise = 0, vowel = 0, vowelScale = 1, gateBus = 2, sustain = 1;
+      { arg inBus = 2, outBus = 0, inAmp = 1, wvAmp = 0, index = 12, noise = 0.2, vowel = 0, vowelScale = 1, gateBus = 2, sustain = 1;
         var in = In.ar(inBus, 1);
 
         var env = EnvGen.kr(
@@ -198,12 +198,12 @@ Engine_LighthouseDigi : CroneEngine {
     SynthDef.new(\bgfScatter,
       { |inBus = 2, outBus = 0, gain = 1, n = 0, release = 0.01, freq = 10000|
         var snd = Impulse.ar();// WhiteNoise.ar();
-        var flt = BPF.ar(snd, freq, 0.2);
+        var flt = (BPF.ar(snd, freq, 0.4) * gain * 4).tanh;
         var env = EnvGen.ar(
           Env.perc(0.001, release),
           doneAction: Done.freeSelf
         );
-        Out.ar(outBus, flt * env * gain * 3);
+        Out.ar(outBus, flt * env);
       }
     ).add;
 
