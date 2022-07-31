@@ -68,8 +68,8 @@ Engine_Pluck2 : CroneEngine {
     
     SynthDef.new(\procFilterGroup,
       { arg out = 0, in = 2, gate = 1, noteIndex = 0, grainFreq, detuneRange, filterRadius, combDecayTime = 3;
-        var buf = Buffer.alloc(context.server, context.server.sampleRate * gBaseImpulseDuration * 2, 2);
-        var inBus = In.ar(in, 1).dup;
+        var buf = Buffer.alloc(context.server, context.server.sampleRate * gBaseImpulseDuration, 1);
+        var inBus = In.ar(in, 1);
         var noteFreq = grainFreq * 2.pow(noteIndex / 12);
   
         var recorder = RecordBuf.ar(
@@ -78,7 +78,7 @@ Engine_Pluck2 : CroneEngine {
           loop: 0,
         );
         var playbuf = PlayBuf.ar(
-          2, buf,
+          1, buf,
           // note: patch gets more resonant if you change this to Impulse.ar(noteFreq)
           trigger: gate,// Impulse.ar(1 / (gBaseImpulseDuration * 2)),
           loop: 1.0,
@@ -87,7 +87,7 @@ Engine_Pluck2 : CroneEngine {
           levelScale: 0.125,
           timeScale: 2.0,
           gate: Impulse.kr(noteFreq / 8.0),
-        ).clip(-1, 1);
+        );
   
         var filterBuf = if(Done.kr(recorder),
           Mix.fill(3, { |index|
@@ -104,15 +104,12 @@ Engine_Pluck2 : CroneEngine {
               // Resonz.ar with bwr of 0.025 also worked ok
               HPF.ar(
                 SOS.ar(
-                  Mix.ar([
-                    CombC.ar(
-                      playbuf,
-                      1 / gBaseFilterResonanceFreq,
-                      1 / combFreq,
-                      combDecayTime,
-                    ),
-                    // SinOsc.ar(combFreq, mul: 0.001),
-                  ]),
+                  CombC.ar(
+                    playbuf,
+                    1 / gBaseFilterResonanceFreq,
+                    1 / combFreq,
+                    combDecayTime,
+                  ),
                   a0: 1, a1: 0, a2: -1,
                   b2: filterRadius.squared.neg,
                   b1: 2.0 * filterRadius * cos(2pi * filterFreq / context.server.sampleRate),
