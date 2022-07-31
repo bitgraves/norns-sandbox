@@ -90,15 +90,16 @@ Engine_Pluck2 : CroneEngine {
         );
   
         var filterBuf = if(Done.kr(recorder),
-          Mix.fill(3, { |index|
-            var detune = if(index > 0, Rand(-1.0 * detuneRange, detuneRange), 0);
+          Mix.fill(2, { |index|
+            // var detune = if(index > 0, TRand(-1.0 * detuneRange, detuneRange, gate), 0);
+            var detune = index * 0.01;
             var filterFreq = (
-              noteFreq *
-              (1.0 + detune)
+              noteFreq
+              * (1.0 + detune)
             );
             var combFreq = (
-              noteFreq *
-              (1.0 + detune)
+              noteFreq
+              * (1.0 + detune)
             );
             DelayL.ar(
               // Resonz.ar with bwr of 0.025 also worked ok
