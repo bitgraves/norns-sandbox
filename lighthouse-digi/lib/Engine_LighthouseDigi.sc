@@ -133,6 +133,8 @@ Engine_LighthouseDigi : CroneEngine {
           Pn(0.15, 4),
         ])
       ),
+      \release, Ptime().collect({|x| ((x * 0.3).sin * 0.005) + 0.01 }),
+      \rq, Ptime().collect({|x| ((x * 0.2).sin * 0.12) + 0.4 }),
       \gain, Pn(
         Pshuf([
           Prand([1, 0.7, 0.5, 0.25], 4),
@@ -142,7 +144,7 @@ Engine_LighthouseDigi : CroneEngine {
         inf
       ) * Pfunc({ gClickGain }),
       \freq, Pn(
-        Pwrand([10000, 8000], [0.9, 0.1])
+        Pwrand([10000, 8000, 7700], [0.9, 0.05, 0.05])
       ),
     ).play(tPercClock);
     pClap = Pbind(
@@ -196,9 +198,9 @@ Engine_LighthouseDigi : CroneEngine {
     ).add;
 
     SynthDef.new(\bgfScatter,
-      { |inBus = 2, outBus = 0, gain = 1, n = 0, release = 0.01, freq = 10000|
-        var snd = Impulse.ar();// WhiteNoise.ar();
-        var flt = (BPF.ar(snd, freq, 0.4) * gain * 4).tanh;
+      { |inBus = 2, outBus = 0, gain = 1, rq = 0.4, n = 0, release = 0.01, freq = 10000|
+        var snd = WhiteNoise.ar();
+        var flt = (BPF.ar(snd, freq, rq) * gain).tanh;
         var env = EnvGen.ar(
           Env.perc(0.001, release),
           doneAction: Done.freeSelf
