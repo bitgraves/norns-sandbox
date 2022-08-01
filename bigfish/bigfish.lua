@@ -23,7 +23,7 @@ function init()
   })
   BGUtil.addEngineControlParam(params, { id = "detune", min = 0, max = 0.08 })
   BGUtil.addEngineControlParam(params, { id = "grainFreqMul", min = 1, max = math.pow(2.0, 7.0 / 12.0) })
-  BGUtil.addEngineControlParam(params, { id = "paper" })
+  BGUtil.addEngineControlParam(params, { id = "paper", warp = 'exp' })
   
   params:add_control('monitor', 'monitor', controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action('monitor', function(x)

@@ -88,8 +88,12 @@ function BGUtil.addEngineControlParam(params, args)
   if args.controlspec then
     spec = args.controlspec
   else
+    local warp = args.warp or 'lin'
     local min, max = args.min or 0, args.max or 1
-    spec = controlspec.new(min, max, args.warp or 'lin', 0, 0, args.units or '')
+    if warp == 'exp' then
+      min = args.min or 0.0002
+    end
+    spec = controlspec.new(min, max, warp, 0, 0, args.units or '')
   end
   if args.action then
     action = args.action
