@@ -244,13 +244,19 @@ Engine_Lighthouse : CroneEngine {
       try {
         // in case already connnected, reset
         stopMidiPatterns.value;
-        mOut.disconnect;
+        if(mOut == nil, {}, {
+          mOut.disconnect;
+        });
       } { };
       
       try {
         mOut = MIDIOut.new(0); //.latency_(context.server.latency);
         mOut.connect(destination);
+        mOut.latency_(context.server.latency);
+        // mOut = MIDIOut.newByName("mio", "mio MIDI 1").latency_(context.server.latency);
+        // mOut = MIDIOut(0, MIDIClient.destinations[destination].uid);
         initMidiPatterns.value;
+        "connect midi succeeded: %".format(mOut != nil).postln;
       } { |error|
         "connect midi failed: %".format(error.species.name).postln;
       }

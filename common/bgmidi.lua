@@ -5,10 +5,10 @@ local BGMidi = {}
 local midiOutDestinationMappings = {
   -- MFB tanzbar drum machine (the older one)
   tanzbar = {
-    chan =  2,
-    controlChan = 9,
+    chan =  2,       -- channel 3: drum note input
+    controlChan = 9, -- channel 10: control parameters
 
-    bd = -24,
+    bd = -24, -- take the value from the manual and subtract 60 (middle C), for some reason
     oh = -19,
     hh = -18,
     cl = -17,
