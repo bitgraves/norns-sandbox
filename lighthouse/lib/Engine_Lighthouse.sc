@@ -178,7 +178,7 @@ Engine_Lighthouse : CroneEngine {
     };
 
     SynthDef.new(\bgfModulator,
-      { arg inBus = 2, outBus = 0, inAmp = 1, wvAmp = 0, index = 12, noise = 0, vowel = 0, vowelScale = 1, gateBus = 2, sustain = 1;
+      { arg inBus = 2, outBus = 0, inAmp = 1, wvAmp = 0, index = 12, noise = 0.2, vowel = 0, vowelScale = 1, gateBus = 2, sustain = 1;
         var in = In.ar(inBus, 1);
 
         var env = EnvGen.kr(
@@ -193,16 +193,17 @@ Engine_Lighthouse : CroneEngine {
         // var v3 = Vowel(\a, \tenor);
         var v = v1.blend(v2, (vowel + SinOsc.kr(0.2, mul: 0.35 * env)).fold(0, 1));
 
-      var sound = DriveNoise.ar(in, noise, multi: 1.5);
-      sound = Mix.ar([
-        sound * inAmp,
-        Mix.ar(Resonz.ar(
-          (sound * 3).clip + WhiteNoise.ar(0.05),
-          freq: v.freqs * vowelScale,
-          bwr: v.rqs,
-          mul: v.amps
-        )) * wvAmp * 10
-      ]);
+        var sound = DriveNoise.ar(in, noise, multi: 1.5);
+        sound = Mix.ar([
+          sound * inAmp,
+          Mix.ar(Resonz.ar(
+            (sound * 3).clip + WhiteNoise.ar(0.1),
+            freq: v.freqs * vowelScale,
+            bwr: v.rqs,
+            mul: v.amps
+          )) * wvAmp * 10
+        ]);
+        sound = Mix.ar(sound);
 
         Out.ar(outBus, sound);
       }

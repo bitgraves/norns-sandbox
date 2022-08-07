@@ -15,11 +15,11 @@ function init()
   BGMidi.sendMapping("tanzbar", engine.addMidiMapping)
 
   BGUtil.addEngineControlParam(params, { id = "vowel" })
-  BGUtil.addEngineControlParam(params, { id = "noise", max = 2 })
+  BGUtil.addEngineControlParam(params, { id = "noise", min = 0.2, max = 2 })
   BGUtil.addEngineControlParam(params, { id = "ana" })
   BGUtil.addEngineControlParam(params, { id = "basis", max = 16 })
   BGUtil.addEngineControlParam(params, { id = "kick" })
-  BGUtil.addEngineControlParam(params, { id = "click", max = 2 })
+  BGUtil.addEngineControlParam(params, { id = "click", max = 2.2 })
   BGUtil.addEngineControlParam(params, { id = "clap" })
   BGUtil.addEngineControlParam(params, { id = "amp" })
   
