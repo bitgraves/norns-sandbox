@@ -24,6 +24,7 @@ function init()
   BGUtil.addEngineControlParam(params, { id = "detune", min = 0, max = 0.08 })
   BGUtil.addEngineControlParam(params, { id = "grainFreqMul", min = 1, max = math.pow(2.0, 7.0 / 12.0) })
   BGUtil.addEngineControlParam(params, { id = "shudderDuration" })
+  BGUtil.addEngineControlParam(params, { id = 'monitor2', warp = 'exp' })
   
   params:add_control('monitor', 'monitor', controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action('monitor', function(x)
@@ -35,8 +36,9 @@ function init()
     [9] = 'grainFreqMul',
     [12] = 'detune',
     [13] = 'shudderDuration',
-    [14] = 'monitor',
+    [14] = 'monitor2',
     [15] = 'amp',
+    [20] = 'monitor',
   })
   
   mid = midi.connect()

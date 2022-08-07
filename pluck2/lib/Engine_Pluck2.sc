@@ -1,7 +1,7 @@
 Engine_Pluck2 : CroneEngine {
   var gBaseGrainFreq, gBaseImpulseDuration, gBaseFilterResonanceFreq, gDetuneRange;
   var bEffects, bFilterRadius, bCombDecay, bGrainFreq, bMasterGate;
-  var <sEffects, <sMasterGate;
+  var <sEffects, <sMasterGate, <sMonitor2;
   var notes;
 
   *new { arg context, doneCallback;
@@ -131,6 +131,12 @@ Engine_Pluck2 : CroneEngine {
         Out.ar(out, Pan2.ar(env));
       }
     ).add;
+    
+    SynthDef.new(\procMonitor2,
+      { arg in = 3, out = 0, gain = 0;
+        Out.ar(out, In.ar(in, 1).dup * gain);
+      }
+    ).add;
         
     context.server.sync;
     
@@ -143,6 +149,11 @@ Engine_Pluck2 : CroneEngine {
       \inGateBus, bMasterGate,
       \out, context.out_b.index,
       \amp, 1],
+    context.xg);
+    
+    sMonitor2 = Synth.new(\procMonitor2, [
+      \in, context.in_b[1].index,
+      \out, context.out_b.index],
     context.xg);
 
     // commands
@@ -193,6 +204,9 @@ Engine_Pluck2 : CroneEngine {
     });
     this.addCommand("detune", "f", {|msg|
       gDetuneRange = msg[1];
+    });
+    this.addCommand("monitor2", "f", {|msg|
+      sMonitor2.set(\gain, msg[1]);
     });
     this.addCommand("shudderDuration", "f", {|msg|
       sMasterGate.set(\shudderDuration, msg[1].linlin(0, 1, 0.1, 0.01));
