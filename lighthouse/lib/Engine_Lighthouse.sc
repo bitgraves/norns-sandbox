@@ -113,8 +113,8 @@ Engine_Lighthouse : CroneEngine {
             \chan, mapping.controlChan,
             \ctlNum, mapping.hh_tune,
             \control, Pn(
-              Pwrand([127, 42], [0.8, 0.2])
-            ),
+              Pwrand([115, 42], [0.8, 0.2])
+            ) * Ptime().collect({|x| ((x * 0.2).sin * 0.1) + 1 }),
           ),
         ]),
         Pbind(
