@@ -66,7 +66,7 @@ Engine_Lighthouse : CroneEngine {
             \chan, mapping.controlChan,
             \ctlNum, mapping.bd1_tune,
             \control, Pn(
-              Pwrand([72, 104], [0.9, 0.1])
+              Pwrand([72, 127], [0.8, 0.2])
             ),
           ),
         ]),
@@ -99,13 +99,21 @@ Engine_Lighthouse : CroneEngine {
               inf
             ) * Pfunc({ gClickGain }),
           ),
+          
+          // \release, Ptime().collect({|x| ((x * 0.3).sin * 0.005) + 0.01 }),
+          Pbind(
+            \midicmd, \control,
+            \chan, mapping.controlChan,
+            \ctlNum, mapping.hh_decay,
+            \control, Ptime().collect({|x| ((x * 0.3).sin * 22) + 22 }),
+          ),
       
           Pbind(
             \midicmd, \control,
             \chan, mapping.controlChan,
             \ctlNum, mapping.hh_tune,
             \control, Pn(
-              Pwrand([127, 64], [0.9, 0.1])
+              Pwrand([127, 42], [0.8, 0.2])
             ),
           ),
         ]),

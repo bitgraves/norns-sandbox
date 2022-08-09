@@ -23,6 +23,7 @@ local midiOutDestinationMappings = {
     mtc_tune = 21,
     mtc_decay = 22,
     hh_tune = 73,
+    hh_decay = 74,
     cp_filter = 18,
     cp_decay = 75,
   },
