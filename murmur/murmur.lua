@@ -13,6 +13,7 @@ function init()
   BGUtil.configureSystemStuff()
 
   BGUtil.addEngineControlParam(params, { id = "vowel" })
+  BGUtil.addEngineControlParam(params, { id = "noise", min = 0.1, max = 1.0 })
   BGUtil.addEngineControlParam(params, {
     id = "harmonic",
     min = 1,
@@ -20,11 +21,11 @@ function init()
   })
   BGUtil.addEngineControlParam(params, {
     id = "scale",
-    min = 0.2,
+    min = 0.206,
     max = 1,
   })
   BGUtil.addEngineControlParam(params, { id = "amp" })
-  BGUtil.addEngineControlParam(params, { id = "samp", max = 1 })
+  BGUtil.addEngineControlParam(params, { id = "samp", warp = 'exp', min = 0.0001, max = 0.6 })
   BGUtil.addEngineControlParam(params, {
     id = "sampHpf",
     min = 60,
@@ -40,7 +41,7 @@ function init()
   MPD218 = BGMidi.newInputMappingMPD218({
     [3] = 'vowel',
     [9] = 'scale',
-    [12] = 'harmonic',
+    [12] = 'noise',
     [13] = 'samp',
     [14] = 'monitor',
     [15] = 'amp',
