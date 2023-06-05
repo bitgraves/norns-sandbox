@@ -1,6 +1,7 @@
 Engine_Crystal : CroneEngine {
   var bEffects;
   var bGlitch;
+  var bEnvLen;
   var notes;
   var <sEffects;
 
@@ -15,11 +16,13 @@ Engine_Crystal : CroneEngine {
     bEffects = Bus.audio(context.server, 2);
     bGlitch = Bus.control(context.server, 1);
     bGlitch.set(0);
+    bEnvLen = Bus.control(context.server, 1);
+    bEnvLen.set(0);
 
     context.server.sync;
     
     SynthDef.new(\crystalEffects,
-      { arg inBus, out, amp = 1, freqLpf = 20000, bend = 0;
+      { arg inBus, out, amp = 0, freqLpf = 40, bend = 0;
         var in = In.ar(inBus, 2);
         Out.ar(out,
           Pan2.ar(
@@ -36,7 +39,7 @@ Engine_Crystal : CroneEngine {
     ).add;
     
     SynthDef.new(\crystalMod,
-      { arg inL, inR, out, glitch = 0, index = 0, gate = 1;
+      { arg inL, inR, out, glitch = 0, envLen = 0, index = 0, gate = 1;
         var in = Mix.ar([In.ar(inL), In.ar(inR)]);
         var offsetSeq = Diwhite(0, 1, inf);
         var glitchFreq = if(offsetSeq == 0, 5, 10 * glitch);
@@ -47,8 +50,10 @@ Engine_Crystal : CroneEngine {
         );
         var voice = PitShift.ar(in: in, shift: (index + (12 * isOffset[0])).midiratio);
         var harmonic = PitShift.ar(in: in, shift: ((index + 19) + (12 * isOffset[1])).midiratio) * 0.5;
+        var attack = envLen.linlin(0.0, 1.0, 3.0, 5.0);
+        var release = envLen.linlin(0.0, 1.0, 4.0, 7.0);
         var note = Mix.ar([voice, harmonic]) *  EnvGen.kr(
-          Env.adsr(3.0, 0, 1.0, 4.0),
+          Env.adsr(attack, 0, 1.0, release),
           gate,
           levelScale: 0.7,
           doneAction: Done.freeSelf
@@ -78,6 +83,7 @@ Engine_Crystal : CroneEngine {
             \index, index],
           context.xg);
           note.map(\glitch, bGlitch);
+          note.map(\envLen, bEnvLen);
           note.onFree({
             if (notes[index] == note,
               notes[index] = nil,
@@ -107,6 +113,9 @@ Engine_Crystal : CroneEngine {
     });
     this.addCommand("freqLpf", "f", {|msg|
       sEffects.set(\freqLpf, msg[1]);
+    });
+    this.addCommand("envLen", "f", {|msg|
+      bEnvLen.set(msg[1]);
     });
   }
 

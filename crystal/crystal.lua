@@ -15,6 +15,7 @@ function init()
   BGUtil.addEngineControlParam(params, { id = "amp" })
   BGUtil.addEngineControlParam(params, { id = "bend" })
   BGUtil.addEngineControlParam(params, { id = "glitch" })
+  BGUtil.addEngineControlParam(params, { id = "envLen", warp = 'exp' })
   BGUtil.addEngineControlParam(params, { id = "freqLpf", min = 40, max = 20000, warp = 'exp' })
   
   params:add_control('monitor', 'monitor', controlspec.new(0, 1, 'lin', 0, 0, ''))
@@ -25,6 +26,7 @@ function init()
   MPD218 = BGMidi.newInputMappingMPD218({
     [3] = 'bend',
     [9] = 'glitch',
+    [12] = 'envLen',
     [13] = 'freqLpf',
     [14] = 'monitor',
     [15] = 'amp',
