@@ -53,10 +53,10 @@ Engine_Bigfish : CroneEngine {
           relaxTime: 0.3
         );
         var env = EnvGen.ar(
-          Env.perc(0.01, 0.5),
+          Env.asr(0.01, 1, 1.5),
           // Impulse.kr(3),
           In.kr(inTrigBus, 1),
-          levelScale: -0.75,
+          levelScale: -0.95,
           levelBias: 1.0,
         );
         Out.ar(outBus, dyno * env * amp);
@@ -113,7 +113,6 @@ Engine_Bigfish : CroneEngine {
     pPaper = Pbind(
       \instrument, \fishPaper,
       \outBus, bPerc,
-      \outTrigBus, bSidechainTrig,
       \amp, Ptime().collect({ |t| ((t * 1.5).sin * 0.5) + 0.6 }) * Pfunc({ gPaperGain }),
       \dur, 0.25,
     ).play(tPercClock);
@@ -182,6 +181,10 @@ Engine_Bigfish : CroneEngine {
     });
     this.addCommand("paper", "f", {|msg|
       gPaperGain = msg[1];
+    });
+    this.addCommand("duck", "i", {|msg|
+      "duck %".format(msg[1]).postln;
+      bSidechainTrig.set(msg[1]);
     });
   }
 

@@ -52,7 +52,16 @@ function midiEvent(data)
   local d = midi.to_msg(data)
   if d.type == 'note_on' then
     local note = d.note - 36
-    engine.noteOn(note)
+    if note == 3 then
+      engine.duck(1);
+    else
+      engine.noteOn(note)
+    end
+  elseif d.type == 'note_off' then
+    local note = d.note - 36
+    if note == 3 then
+      engine.duck(0);
+    end
   elseif d.type == 'cc' then
     local handled, msg = BGMidi.handleCCMPD218(MPD218, params, d.cc, d.val)
     if handled then
