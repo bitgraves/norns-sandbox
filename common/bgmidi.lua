@@ -13,6 +13,7 @@ local midiOutDestinationMappings = {
     hh = -18,
     cl = -17,
     sd = -22,
+    rs = -21,
     cp = -16,
     ltc = -15,
     mtc = -13,

@@ -74,13 +74,14 @@ Engine_Lighthouse : CroneEngine {
           \type, \midi,
           \midiout, mOut,
           \dur, Pn( // TODO: is this running separately for each child?
-            Pwrand([
-              12,
-              Pseq([13, 3]),
-              8,
-            ], [7, 3, 1].normalizeSum),
-            inf
-          ) * 0.1,
+            Pconst(24,
+              Pwrand([
+                12,
+                Pseq([13, 3]),
+                8,
+              ], [7, 3, 1].normalizeSum),
+              inf
+            )) * 0.1,
         ),
       ).play(tPercClock);
         
@@ -167,11 +168,10 @@ Engine_Lighthouse : CroneEngine {
           \type, \midi,
           \midiout, mOut,
           \dur, Pn(
-            Pconst(8,
+            Pconst(4,
               Pshuf([
                 Pn(0.8, 2),
                 Pn(0.8, 1),
-                Pn(1.2, 1),
                 Pn(0.4, 2),
                 Pn(0.6, 2),
                 Pseq([0.4, 0.8], 1),
