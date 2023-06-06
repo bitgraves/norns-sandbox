@@ -33,14 +33,14 @@ Engine_Crystal : CroneEngine {
               ),
               freqLpf, 0.998
             )
-          )
+          ) * amp
         );
       }
     ).add;
     
     SynthDef.new(\crystalMod,
       { arg inL, inR, out, glitch = 0, envLen = 0, index = 0, gate = 1;
-        var in = Mix.ar([In.ar(inL), In.ar(inR)]);
+        var in = [In.ar(inL), In.ar(inR)];
         var offsetSeq = Diwhite(0, 1, inf);
         var glitchFreq = if(offsetSeq == 0, 5, 10 * glitch);
         var isOffset = Demand.kr(
