@@ -27,7 +27,7 @@ function init()
   BGUtil.addEngineControlParam(params, { id = "noiseFreq", min = tuneFreq, max = tuneFreq * 2, warp = 'exp' })
   BGUtil.addEngineControlParam(params, { id = "subFreq", min = tuneFreq * 0.5, max = tuneFreq, warp = 'exp' })
   BGUtil.addEngineControlParam(params, { id = "sineFreq", min = 18, max = 18000, warp = 'exp' })
-  BGUtil.addEngineControlParam(params, { id = "sineAmp", min = 0.0001, max = 0.1, warp = 'exp' })
+  BGUtil.addEngineControlParam(params, { id = "sineAmp", min = 0.0001, max = 0.5, warp = 'exp' })
   BGUtil.addEngineControlParam(params, { id = "amp" })
   
   params:add_control("monitor", "monitor", controlspec.new(0, 1, 'lin', 0, 0, ''))
@@ -67,9 +67,23 @@ function midiEvent(data)
   local d = midi.to_msg(data)
   if d.type == 'note_on' then
     local note = d.note - 36
-    local newFreq = tuneFreq * math.pow(2.0, note / 12.0)
-    params:set('sineFreq', newFreq)
-    redraw('sineFreq ' .. newFreq)
+    if note == 0 then
+      params:set('subFreq', tuneFreq * 0.5)
+      redraw('subFreq low')
+    elseif note == 1 then
+      params:set('subFreq', tuneFreq)
+      redraw('subFreq center')
+    elseif note == 2 then
+      params:set('noiseFreq', tuneFreq)
+      redraw('noiseFreq center')
+    elseif note == 3 then
+      params:set('noiseFreq', tuneFreq * 2)
+      redraw('noiseFreq hi')
+    else
+      local newFreq = tuneFreq * math.pow(2.0, note / 12.0)
+      params:set('sineFreq', newFreq)
+      redraw('sineFreq ' .. newFreq)
+    end
   elseif d.type == 'cc' then
     local handled, msg = BGMidi.handleCCMPD218(MPD218, params, d.cc, d.val)
     if handled then

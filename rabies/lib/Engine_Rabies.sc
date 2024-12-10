@@ -47,8 +47,13 @@ Engine_Rabies : CroneEngine {
     SynthDef.new(\rabiesSines,
       { arg inL, inR, out, amp = 1, freq = 440;
         var in = [In.ar(inL), In.ar(inR)];
-	var voice = SinOsc.ar(freq);
-	Out.ar(out, Pan2.ar(voice, 0.5) * amp);
+  var voice = SinOsc.ar(
+    freq: [freq, freq * 2, freq * 3],
+    mul: [1.0, 0.5, 0.25]
+  );
+  var env = Saw.kr(8.0, mul: 0.9, add: 0.1); // EnvGen.kr(Env.perc(0.01, 1/8), Impulse.kr(8));
+  var env2 = SinOsc.kr(0.2, mul: 0.5, add: 1.0);
+  Out.ar(out, Pan2.ar(voice, 0.5) * amp * env * env2);
       }
     ).add;
 
