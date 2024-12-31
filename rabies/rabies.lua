@@ -27,7 +27,7 @@ function init()
   BGUtil.addEngineControlParam(params, { id = "noiseFreq", min = tuneFreq, max = tuneFreq * 2, warp = 'exp' })
   BGUtil.addEngineControlParam(params, { id = "subFreq", min = tuneFreq * 0.5, max = tuneFreq, warp = 'exp' })
   BGUtil.addEngineControlParam(params, { id = "sineFreq", min = 18, max = 18000, warp = 'exp' })
-  BGUtil.addEngineControlParam(params, { id = "sineAmp", min = 0.0001, max = 0.5, warp = 'exp' })
+  BGUtil.addEngineControlParam(params, { id = "sineAmp", min = 0.0001, max = 2.0, warp = 'exp' })
   BGUtil.addEngineControlParam(params, { id = "amp" })
   
   params:add_control("monitor", "monitor", controlspec.new(0, 1, 'lin', 0, 0, ''))
