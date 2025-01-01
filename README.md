@@ -4,7 +4,7 @@ This repo contains software for [norns](https://monome.org/norns/) written by [b
 
 ## Prerequisites
 
-- You need a norns. (our norns was last updated to: [201202](https://github.com/monome/norns/releases/tag/v2.4.7))
+- You need a norns. (our norns was last updated to: [240911](https://github.com/monome/norns/releases/tag/v2.8.4))
 - You need filesystem access to your norns, one way or another
 - Almost everything here acts as a signal processor rather than a generator, so you need some external audio running into the norns for this to be interesting
 - You probably want some kind of midi controller (see below)
