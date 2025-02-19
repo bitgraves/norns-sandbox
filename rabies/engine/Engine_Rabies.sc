@@ -31,18 +31,18 @@ Engine_Rabies : CroneEngine {
     SynthDef.new(\rabiesSines,
       { arg inL, inR, out, amp = 1, freq = 440;
         var in = In.ar(inL);
-      	var syn = Pulse.ar(
-      	  freq, //: [freq, freq * 2, freq * 3],
-      	  mul: 1.0, //: [1.0, 0.5, 0.25]
-      	);
-      	var env = Saw.kr(8.0, mul: 0.9, add: 0.1); // EnvGen.kr(Env.perc(0.01, 1/8), Impulse.kr(8));
-      	var env2 = SinOsc.kr(0.2, mul: 0.5, add: 1.0);
-      	var voice = DiodeRingMod.ar(
+        var syn = Pulse.ar(
+          freq, //: [freq, freq * 2, freq * 3],
+          mul: 1.0, //: [1.0, 0.5, 0.25]
+        );
+        var env = Saw.kr(8.0, mul: 0.9, add: 0.1); // EnvGen.kr(Env.perc(0.01, 1/8), Impulse.kr(8));
+        var env2 = SinOsc.kr(0.2, mul: 0.5, add: 1.0);
+        var voice = DiodeRingMod.ar(
           car: in,
           mod: Mix.ar(syn)
         );
         var voice2 = Mix.ar([voice, syn]) * env * env2 * amp;
-	      Out.ar(out, Pan2.ar(voice2, 0.5));
+        Out.ar(out, Pan2.ar(voice2, 0.5));
       }
     ).add;
 
