@@ -60,8 +60,8 @@ function midiEvent(data)
   local d = midi.to_msg(data)
   if d.type == 'note_on' then
     local note = d.note - 36
-    if note < 16 then
-      local newFreq = tuneFreq * math.pow(2.0, note / 12.0)
+    if note < 4 then
+      local newFreq = tuneFreq * math.pow(2.0, note)
       params:set('sineFreq', newFreq)
       redraw('sineFreq ' .. newFreq)
     end
