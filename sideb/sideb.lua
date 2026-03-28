@@ -17,6 +17,7 @@ function init()
   
   BGUtil.addEngineControlParam(params, { id = "gate", min = 0, max = 1 })
   BGUtil.addEngineControlParam(params, { id = "sineFreq", min = 18, max = 18000, warp = 'exp' })
+  BGUtil.addEngineControlParam(params, { id = "poly", min = 0, max = 7 })
   BGUtil.addEngineControlParam(params, { id = "sineAmp1", min = 0.0001, max = 2.0, warp = 'exp' })
   BGUtil.addEngineControlParam(params, { id = "sineHarm1", min = 1, max = 12, warp = 'exp' })
   BGUtil.addEngineControlParam(params, { id = "sineAmp2", min = 0.0001, max = 2.0, warp = 'exp' })
@@ -68,6 +69,10 @@ function midiEvent(data)
       local newFreq = tuneFreq * math.pow(2.0, note)
       params:set('sineFreq', newFreq)
       redraw('sineFreq ' .. newFreq)
+    elseif note < 12 then
+      local newPoly = note - 4
+      params:set('poly', newPoly)
+      redraw('poly ' .. newPoly)
     end
     params:set('gate', 1)
   elseif d.type == 'note_off' then

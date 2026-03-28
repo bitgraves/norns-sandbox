@@ -14,13 +14,13 @@ Engine_Sideb : CroneEngine {
     context.server.sync;
     
     SynthDef.new(\sidebEffects,
-      { arg inBus, out, amp = 1, envAmount = 1, envFreq = 6, noiseGain = 0;
+      { arg inBus, out, amp = 1, envAmount = 1, envFreq = 6, poly = 5, noiseGain = 0;
         var in = In.ar(inBus, 2);
         var gate = Impulse.kr(envFreq);
         var release = (1.0 / envFreq) * 3.0;
-        var accents = envAmount * Demand.kr(gate, 0, Dseq([1, 0.5, 0.5, 0.5, 0.5], inf));
+        var accents = envAmount * Demand.kr(gate, 0, Dseq([1, Dser([0.5, 0.48], poly), 0.55], inf)) * Demand.kr(gate, 0, Dxrand([0.96, 0.98, 1, 1.01], inf));
         var env = EnvGen.kr(
-           Env.perc(0.01, release),
+           Env.perc(0.033, release),
            gate,
            levelScale: accents,
            levelBias: 1.0 - envAmount,
@@ -104,6 +104,9 @@ Engine_Sideb : CroneEngine {
     });
     this.addCommand("noiseGain", "f", {|msg|
       sEffects.set(\noiseGain, msg[1]);
+    });
+    this.addCommand("poly", "f", {|msg|
+      sEffects.set(\poly, msg[1]);
     });
   }
 
