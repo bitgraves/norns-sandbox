@@ -11,7 +11,7 @@ local MPD218
 function init()
   BGUtil.configureSystemStuff()
 
-  BGUtil.addEngineControlParam(params, { id = "lpf", min = 100, max = 16000, warp = 'exp' })
+  BGUtil.addEngineControlParam(params, { id = "lpf", min = 100, max = 1600 })
   BGUtil.addEngineControlParam(params, { id = "padGain" })
   BGUtil.addEngineControlParam(params, { id = "spread", min = 0.5, max = 1, warp = 'exp' })
 

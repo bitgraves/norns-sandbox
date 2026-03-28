@@ -13,7 +13,7 @@ function init()
 
   BGUtil.addEngineControlParam(params, { id = "attack", min = 0.001, max = 0.2, warp = 'exp' })
   BGUtil.addEngineControlParam(params, { id = "fold", min = 1, max = 20 })
-  BGUtil.addEngineControlParam(params, { id = "env" })
+  BGUtil.addEngineControlParam(params, { id = "env", min = 0.01, max = 1, warp = 'exp' })
   BGUtil.addEngineControlParam(params, { id = "mix" })
   BGUtil.addEngineControlParam(params, { id = "hpf", min = 30, max = 18000, warp = 'exp' })
   BGUtil.addEngineControlParam(params, { id = "voxGain", min = 0.001, max = 2, warp = 'exp' })
