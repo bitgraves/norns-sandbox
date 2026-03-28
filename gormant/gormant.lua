@@ -24,6 +24,7 @@ function init()
     [3] = 'lpf',
     [9] = 'padGain',
     [12] = 'spread',
+    [14] = 'monitor',
   })
 
   mid = midi.connect()

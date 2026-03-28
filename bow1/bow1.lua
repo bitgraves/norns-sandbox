@@ -26,6 +26,7 @@ function init()
     [9] = 'velbow',
     [12] = 'comb',
     [13] = 'combLerp',
+    [14] = 'monitor',
   })
 
   mid = midi.connect()
