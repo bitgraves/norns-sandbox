@@ -53,7 +53,7 @@ Engine_Seqbass : CroneEngine {
       snd = snd + Mix.ar(Pulse.ar({ combFreq * 2 * LFNoise2.kr(2, 0.05, 1) } ! 3, mul: 0.02));
       snd = (snd * -5.dbamp) + Mix.ar(CombC.ar(snd, [combFreq.reciprocal, (combFreq * 2).reciprocal], combFreq.reciprocal)) * -10.dbamp;
       snd = HPF.ar(snd, 150, -5.dbamp);
-      snd = Compander.ar(snd, thresh: -2.dbamp, slopeAbove: 0.5, relaxTime: 0.01);
+      snd = Compander.ar(snd, snd, thresh: -2.dbamp, slopeAbove: 0.5, relaxTime: 0.01);
       snd = [snd, DelayC.ar(snd, SinOsc.kr(2, 0, 0.005, 0.01), 0.015)];
 
       Out.ar(\out.kr(0), snd * \gain.kr(0));
