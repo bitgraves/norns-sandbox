@@ -139,7 +139,7 @@ Engine_Gopher2 : CroneEngine {
         \harm2, harm2,
         \attack, attack,
         \click, click,
-        \out, bFx],
+        \out, context.out_b.index],
       context.xg);
     });
   }
