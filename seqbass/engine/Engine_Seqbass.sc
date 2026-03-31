@@ -85,7 +85,9 @@ Engine_Seqbass : CroneEngine {
       sSynth.set(\mix, msg[1]);
     });
     this.addCommand("hpf", "f", {|msg|
-      sSynth.set(\hpf, msg[1]);
+      var param = msg[1].linlin(0,1,1,0.001);
+      param = param.linexp(0.001,1,30,18000);
+      sSynth.set(\hpf, param);
     });
 
     // vox commands
