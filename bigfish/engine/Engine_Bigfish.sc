@@ -2,7 +2,7 @@ Engine_Bigfish : CroneEngine {
   var gBaseGrainFreq, gBaseImpulseDuration, gBaseFilterResonanceFreq, gDetuneRange, gPaperGain;
   var bEffects, bPerc, bFilterRadius, bGrainFreq, bNoise, bSidechainTrig;
   var tPercClock, pPaper;
-  var sEffects, sPerc;
+  var sEffects, sPerc, sSubbass;
 
   *new { arg context, doneCallback;
     ^super.new(context, doneCallback);
@@ -31,7 +31,22 @@ Engine_Bigfish : CroneEngine {
     bGrainFreq.set(gBaseGrainFreq);
 
     context.server.sync;
-    
+
+    // subbass
+    SynthDef(\fishSubbass, {
+      var freq = 30.midicps;
+      var snd = SinOsc.ar(freq, phase: SinOsc.ar(freq * 7, mul: LFSaw.kr(0.2).range(0,2)));
+      var wub = LFSaw.kr(0.25).range(0,1);
+      snd = snd * wub.dbamp;
+      snd = RLPF.ar(snd, freq * 4);
+      snd = snd.fold2;
+      snd = snd * (-1 * wub).dbamp;
+      snd = snd * SinOsc.ar(5, mul: 0.5, add: 1);
+  
+      snd = snd ! 2;
+      Out.ar(\out.kr(0), snd * \amp.kr(0));
+    }).add;
+
     // perc bus
     SynthDef.new(\fishPerc,
       { arg outBus = 0, amp = 1, inBus = 2;
@@ -39,7 +54,7 @@ Engine_Bigfish : CroneEngine {
         Out.ar(outBus, Pan2.ar(input) * amp);
       }
     ).add;
-    
+
     // effects bus
     SynthDef.new(\fishEffects,
       { arg outBus = 0, amp = 1, inTrigBus = 2, inEffectsBus = 2;
@@ -106,7 +121,7 @@ Engine_Bigfish : CroneEngine {
           gate: Trig.kr(1.0, 3.0),
           doneAction: Done.freeSelf
         );
-        Out.ar(out, Pan2.ar(voice * env));
+        Out.ar(out, Pan2.ar(voice * env) * -7.dbamp);
       }
     ).add;
     
@@ -143,6 +158,8 @@ Engine_Bigfish : CroneEngine {
       \inBus, bPerc,
       \outBus, context.out_b.index],
     context.xg);
+
+    sSubbass = Synth.new(\fishSubbass, [\out, bEffects], context.xg);
 
     // commands
 
@@ -182,6 +199,9 @@ Engine_Bigfish : CroneEngine {
     this.addCommand("paper", "f", {|msg|
       gPaperGain = msg[1];
     });
+    this.addCommand("subbassAmp", "f", {|msg|
+      sSubbass.set(\amp, msg[1]);
+    });
     this.addCommand("duck", "i", {|msg|
       "duck %".format(msg[1]).postln;
       bSidechainTrig.set(msg[1]);
@@ -192,6 +212,7 @@ Engine_Bigfish : CroneEngine {
     pPaper.stop;  
     sEffects.free;
     sPerc.free;
+    sSubbass.free;
     bEffects.free;
     bPerc.free;
     bFilterRadius.free;
