@@ -51,9 +51,11 @@ function midiEvent(data)
   if d.type == 'note_on' then
     local note = d.note - 36
     if note == 0 then
+      redraw('gate')
       engine.gate(1)
     elseif note > 0 then
       local combNote = note - 1
+      redraw('note ' .. combNote)
       engine.combNote(combNote)
     end
   elseif d.type == 'note_off' then

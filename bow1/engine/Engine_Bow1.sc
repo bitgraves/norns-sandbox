@@ -40,7 +40,7 @@ Engine_Bow1 : CroneEngine {
     context.server.sync;
 
     sSynth = Synth(\bgbowed2, [
-      \freq, 27.midicps,
+      \freq, 26.midicps,
       \out, context.out_b.index],
     context.xg);
 

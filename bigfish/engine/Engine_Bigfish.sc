@@ -35,7 +35,7 @@ Engine_Bigfish : CroneEngine {
     // subbass
     SynthDef(\fishSubbass, {
       var freq = 30.midicps;
-      var snd = SinOsc.ar(freq, phase: SinOsc.ar(freq * 7, mul: LFSaw.kr(0.2).range(0,2)));
+      var snd = SinOsc.ar(freq, phase: SinOsc.ar(freq * 7, mul: LFSaw.kr(0.2).range(0,\fm.kr(2))));
       var wub = LFSaw.kr(0.25).range(0,1);
       snd = snd * wub.dbamp;
       snd = RLPF.ar(snd, freq * 4);
@@ -121,7 +121,7 @@ Engine_Bigfish : CroneEngine {
           gate: Trig.kr(1.0, 3.0),
           doneAction: Done.freeSelf
         );
-        Out.ar(out, Pan2.ar(voice * env) * -7.dbamp);
+        Out.ar(out, Pan2.ar(voice * env) * -3.dbamp);
       }
     ).add;
     
@@ -201,6 +201,9 @@ Engine_Bigfish : CroneEngine {
     });
     this.addCommand("subbassAmp", "f", {|msg|
       sSubbass.set(\amp, msg[1]);
+    });
+    this.addCommand("subbassFm", "f", {|msg|
+      sSubbass.set(\fm, msg[1]);
     });
     this.addCommand("duck", "i", {|msg|
       "duck %".format(msg[1]).postln;

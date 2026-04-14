@@ -25,6 +25,7 @@ function init()
   BGUtil.addEngineControlParam(params, { id = "grainFreqMul", min = 1, max = math.pow(2.0, 7.0 / 12.0) })
   BGUtil.addEngineControlParam(params, { id = "paper", warp = 'exp' })
   BGUtil.addEngineControlParam(params, { id = "subbassAmp", warp = 'exp' })
+  BGUtil.addEngineControlParam(params, { id = "subbassFm", warp = 'exp', min = 2, max = 3.5 })
   
   params:add_control('monitor', 'monitor', controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action('monitor', function(x)
@@ -36,7 +37,7 @@ function init()
     [9] = 'grainFreqMul',
     [12] = 'subbassAmp',
     [13] = 'paper',
-    [14] = 'monitor',
+    [14] = 'subbassFm',
     [15] = 'amp',
   })
   
