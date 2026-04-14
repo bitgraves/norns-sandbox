@@ -1,5 +1,6 @@
 Engine_Gormant : CroneEngine {
-  var <sSynth;
+  var <sSynth, sSample;
+  var bufSample;
 
   *new { arg context, doneCallback;
     ^super.new(context, doneCallback);
@@ -7,6 +8,9 @@ Engine_Gormant : CroneEngine {
 
   alloc {
     "Gormant alloc".postln;
+    
+    bufSample = Buffer.read(context.server, "/home/we/dust/code/bitgraves/samples/20260414-kurz-sample-looped.wav");
+    context.server.sync;
 
     SynthDef.new(\gormant, {
       var in, snd, snd2, n, freqs;
@@ -25,12 +29,27 @@ Engine_Gormant : CroneEngine {
       snd = Latch.ar(snd, Impulse.ar(SinOsc.kr(1/20, 0, 200.0, 2000.0)));
 
       snd = snd ! 2;
-      Out.ar(\out.kr(0), snd);
+      Out.ar(\out.kr(0), snd * \gain.kr(0));
+    }).add;
+    
+    SynthDef.new(\gormantSample, {
+      var snd;
+      var bufnum = \bufnum.kr(0);
+      var freq = BufDur.ir(bufnum).reciprocal;
+      var rate = BufRateScale.kr(bufnum);
+      snd = PlayBuf.ar(2, bufnum, rate: rate, trigger: Impulse.kr(freq), loop: 1) * LFSaw.kr(freq);
+      snd = snd + (PlayBuf.ar(2, bufnum, rate: rate, trigger: Impulse.kr(freq, 0.5), loop: 1) * LFSaw.kr(freq, 1));
+      snd = HPF.ar(snd, 150);
+      Out.ar(\out.kr(0), snd * \gain.kr(0));
     }).add;
 
     context.server.sync;
 
     sSynth = Synth(\gormant, [
+      \out, context.out_b.index],
+    context.xg);
+    
+    sSample = Synth(\gormantSample, [
       \out, context.out_b.index],
     context.xg);
 
@@ -43,10 +62,20 @@ Engine_Gormant : CroneEngine {
     this.addCommand("spread", "f", {|msg|
       sSynth.set(\spread, msg[1]);
     });
+    
+    this.addCommand("gain", "f", {|msg|
+      sSynth.set(\gain, msg[1]);
+    });
+    
+    this.addCommand("kurz", "f", {|msg|
+      sSample.set(\gain, msg[1]);
+    });
   }
 
   free {
     sSynth.free;
+    sSample.free;
+    bufSample.free;
   }
 
 }

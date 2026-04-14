@@ -14,6 +14,8 @@ function init()
   BGUtil.addEngineControlParam(params, { id = "lpf", min = 100, max = 1600 })
   BGUtil.addEngineControlParam(params, { id = "padGain" })
   BGUtil.addEngineControlParam(params, { id = "spread", min = 0.5, max = 1, warp = 'exp' })
+  BGUtil.addEngineControlParam(params, { id = "kurz", min = 0.01, max = 4, warp = 'exp' })
+  BGUtil.addEngineControlParam(params, { id = "gain", warp = 'exp' })
 
   params:add_control("monitor", "monitor", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("monitor", function(x)
@@ -24,7 +26,9 @@ function init()
     [3] = 'lpf',
     [9] = 'padGain',
     [12] = 'spread',
+    [13] = 'kurz',
     [14] = 'monitor',
+    [15] = 'gain',
   })
 
   mid = midi.connect()
