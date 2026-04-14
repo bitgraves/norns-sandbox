@@ -77,7 +77,7 @@ Engine_Gopher2 : CroneEngine {
       var duckslow = 1.0 - EnvGen.ar(Env.perc(0.01, 4), \trig.kr(0));
 
       var delays = (110 * 6.midiratio).reciprocal / [0.5, 2, 7, 9];
-      var combs = \combs.kr(1);
+      var combs = \combs.kr(0);
 
       var snd = in;
 
@@ -101,9 +101,7 @@ Engine_Gopher2 : CroneEngine {
 
     sSparrow = Synth.new(\bgsparrowbaby, [
       \out, bFx,
-      \bufnum, bufSample,
-      \chirp, 1,
-      \tilt, 0.8],
+      \bufnum, bufSample],
     context.xg);
 
     // fx commands
