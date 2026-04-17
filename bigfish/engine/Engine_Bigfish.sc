@@ -117,10 +117,11 @@ Engine_Bigfish : CroneEngine {
           )
         }).tanh;
         var env = EnvGen.kr(
-          Env.adsr(6.0, 0.2, 0.9, 16.0),
+          Env.adsr(6.0, 0.2, 0.9, 20.0),
           gate: Trig.kr(1.0, 3.0),
           doneAction: Done.freeSelf
         );
+        voice = HPF.ar(voice, 120);
         Out.ar(out, Pan2.ar(voice * env) * -3.dbamp);
       }
     ).add;
@@ -159,7 +160,7 @@ Engine_Bigfish : CroneEngine {
       \outBus, context.out_b.index],
     context.xg);
 
-    sSubbass = Synth.new(\fishSubbass, [\out, bEffects], context.xg);
+    sSubbass = Synth.new(\fishSubbass, [\out, context.out_b.index], context.xg);
 
     // commands
 
