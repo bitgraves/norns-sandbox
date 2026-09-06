@@ -24,7 +24,7 @@ function init()
   BGUtil.addEngineControlParam(params, { id = "seqFreq", min = 3, max = 51 })
   BGUtil.addEngineControlParam(params, { id = "oscFreq", min = 110, max = 440, warp = 'exp' })
   BGUtil.addEngineControlParam(params, { id = "bend" })
-  BGUtil.addEngineControlParam(params, { id = "amp" })
+  -- BGUtil.addEngineControlParam(params, { id = "amp" })
   
   params:add_control("monitor", "monitor", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("monitor", function(x)
@@ -37,7 +37,7 @@ function init()
     [12] = 'mix',
     [13] = 'noiseFreq',
     [14] = 'monitor',
-    [15] = 'amp',
+    -- [15] = 'amp',
   })
   
   mid = midi.connect()
