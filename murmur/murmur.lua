@@ -25,7 +25,7 @@ function init()
     max = 1,
   })
   BGUtil.addEngineControlParam(params, { id = "amp" })
-  BGUtil.addEngineControlParam(params, { id = "samp", warp = 'exp', min = 0.0001, max = 0.6 })
+  BGUtil.addEngineControlParam(params, { id = "samp", warp = 'exp', min = 0.0001, max = 0.85 })
   BGUtil.addEngineControlParam(params, {
     id = "sampHpf",
     min = 60,
@@ -48,6 +48,7 @@ function init()
     [16] = 'sampHpf',
   })
   
+  redraw()
   mid = midi.connect()
   mid.event = midiEvent
   redraw()

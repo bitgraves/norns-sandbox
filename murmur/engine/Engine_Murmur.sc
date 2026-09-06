@@ -73,6 +73,14 @@ Engine_Murmur : CroneEngine {
           bwr: v.rqs * 0.9,
           mul: v.amps
         )) * 10).tanh;
+        
+        // add a subbass layer which doesn't scale with vowelScale
+        sound = sound + (Mix.ar(Resonz.ar(
+          in,
+          freq: v.freqs * 0.206 * n.midiratio,
+          bwr: v.rqs * 0.9,
+          mul: v.amps
+        )) * 3).tanh;
   
         // remove some freqs for ENHANCEMENT
         sound = Mix.ar(BRF.ar(sound, vowel.linexp(0, 1, 220, 1760) * [1, 1.3, 1.6], 0.8, mul: 0.6));
