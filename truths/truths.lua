@@ -31,6 +31,9 @@ function init()
     end,
   })
 
+  BGUtil.addEngineControlParam(params, { id = "padAmp", warp = 'exp', min = 0.001, max = 0.8 })
+  BGUtil.addEngineControlParam(params, { id = "padRez" })
+
   params:add_control("monitor", "monitor", controlspec.new(0, 1, 'lin', 0, 0, ''))
   params:set_action("monitor", function(x)
     audio.level_monitor(x)
@@ -40,10 +43,12 @@ function init()
     [3] = 'bend',
     [9] = 'carrierSource',
     [12] = 'modSource',
-    [13] = 'sustain',
-    [14] = 'monitor',
+    -- [13] = 'sustain',
+    [13] = 'padAmp',
+    [14] = 'padRez',
     [15] = 'amp',
     -- [16] = 'padOffset',
+    [20] = 'monitor',
   })
   
   mid = midi.connect()

@@ -1,6 +1,6 @@
 Engine_Truths : CroneEngine {
-  var bCarrier, bModulator, bTrig;
-  var <sCarrier, <sModulator, <sFilter, sTrig;
+  var bCarrier, bModulator, bTrig, bPad;
+  var <sCarrier, <sModulator, <sFilter, <sPad, sTrig;
 
   *new { arg context, doneCallback;
     ^super.new(context, doneCallback);
@@ -12,6 +12,10 @@ Engine_Truths : CroneEngine {
     bCarrier = Bus.audio(context.server, 1);
     bModulator = Bus.audio(context.server, 1);
     bTrig = Bus.control(context.server, 1);
+    bPad = Buffer.read(
+      context.server,
+      Platform.userHomeDir +/+ "dust/code/bitgraves/samples/20260906-bitgraves-truths-pad.wav"
+    );
     context.server.sync;
 
     SynthDef.new(\pgTrig,
@@ -95,6 +99,40 @@ Engine_Truths : CroneEngine {
          Out.ar(outBus, pan * amp);
       }
     ).add;
+
+    SynthDef.new(\pgPad,
+      { arg buf = 0, outBus = 0, rate = 1, amp = 0,
+            root = 59,        // B3
+            decay = 6.0,
+            rezMix = 0,        // 0 = dry loop, 1 = resonators only
+            gate = 1;
+        var src, exc, freqs, amps, res, sig, env;
+
+        env = EnvGen.kr(Env.asr(0.05, 1, 0.3), gate, doneAction: 2);
+
+        src = PlayBuf.ar(2, buf, BufRateScale.kr(buf) * rate, loop: 1) * 0.5;
+
+        exc = LeakDC.ar(src);
+        exc = HPF.ar(exc, 60);
+        exc = LPF.ar(exc, 18000);
+
+        freqs = (root + [0, 5, 7]).midicps;
+        amps = SinOsc.kr([0.4, 0.44, 0.41], phase: [0, 0.5pi, pi], mul: 0.2, add: [0.9, 0.6, 0.7]);
+
+        // Ringz gain scales with decay time, so normalise it back out
+        res = [
+          (Ringz.ar(exc[0], freqs, decay) * amps / decay.max(0.01).sqrt).sum * 0.3,
+          (Ringz.ar(exc[1], freqs, decay) * amps / decay.max(0.01).sqrt).sum * 0.3
+        ];
+
+        sig = XFade2.ar(exc, res, rezMix * 2 - 1);
+        sig = Limiter.ar(LeakDC.ar(sig), 0.9);
+        
+        sig = HPF.ar(sig, 180);
+
+        Out.ar(outBus, sig * amp * env);
+      }
+    ).add;
         
     context.server.sync;
     
@@ -115,6 +153,10 @@ Engine_Truths : CroneEngine {
     sModulator = Synth.new(\pgModulator, [
       \inBus, context.in_b[0].index,
       \outBus, bModulator],
+    context.xg);
+    sPad = Synth.new(\pgPad, [
+      \buf, bPad,
+      \outBus, context.out_b.index],
     context.xg);
 
     // commands
@@ -137,6 +179,12 @@ Engine_Truths : CroneEngine {
     this.addCommand("bend", "f", {|msg|
       sModulator.set(\wvBend, msg[1]);
     });
+    this.addCommand("padAmp", "f", {|msg|
+      sPad.set(\amp, msg[1]);
+    });
+    this.addCommand("padRez", "f", {|msg|
+      sPad.set(\rezMix, msg[1]);
+    });
     this.addCommand("noteOn", "i", {|msg|
       var index = msg[1];
       var wvFreq = 110 * index.midiratio;
@@ -153,6 +201,8 @@ Engine_Truths : CroneEngine {
     sCarrier.free;
     sModulator.free;
     sFilter.free;
+    sPad.free;
+    bPad.free;
   }
 
 } 
