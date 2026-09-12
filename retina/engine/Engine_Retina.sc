@@ -1,5 +1,5 @@
 Engine_Retina : CroneEngine {
-  var bCarrier, bTrig, bDelay;
+  var bCarrier, bTrig, bDelay, bOscMix;
   var <sChordShape, <sChordShapeOct, <sTrembler, <sTrig, <sDelay, <sMonitor;
   var <notes;
 
@@ -13,6 +13,8 @@ Engine_Retina : CroneEngine {
     bCarrier = Bus.audio(context.server, 1);
     bTrig = Bus.control(context.server, 1);
     bDelay = Bus.audio(context.server, 1);
+    bOscMix = Bus.control(context.server, 1);
+    bOscMix.set(0);
     notes = Array.newClear(16 * 3);
     
     context.server.sync;
@@ -30,18 +32,27 @@ Engine_Retina : CroneEngine {
     ).add;
   
     sChordShape = SynthDef.new(\retChordShape,
-      { arg inBus = 2, outBus = 0, gate = 1, index = 0;
+      { arg inBus = 2, outBus = 0, gate = 1, index = 0, oscMix = 0;
         var in = In.ar(inBus, 1);
+        var shifts = [index.midiratio, (index + 5).midiratio, (index + 7).midiratio];
         var ps = PitShift.ar(
           in,
-          shift: [index.midiratio, (index + 5).midiratio, (index + 7).midiratio],
+          shift: shifts,
         );
+        
+        var fFreq = 53.midicps; // sub-middle F
+        var oscs = SinOsc.ar(fFreq * shifts, mul: 0.33).sum;
+        
         var env = EnvGen.kr(
           Env.adsr(1, 0.002, 1, 8),
           gate,
           doneAction: Done.freeSelf,
         );
-        Out.ar(outBus, Mix.ar(ps * env));
+        
+        // var snd = Mix.ar([ps, oscs]);
+        var snd = XFade2.ar(ps, oscs, oscMix * 2 - 1);
+        
+        Out.ar(outBus, Mix.ar(snd * env));
       }
     ).add;
 
@@ -142,6 +153,7 @@ Engine_Retina : CroneEngine {
                 \index, index + 24,
                 \outBus, bCarrier],
               context.xg);
+              note.map(\oscMix, bOscMix);
             }, {
               note = Synth.new(\retChordShapeOct, [
                 \inBus, context.in_b[0].index,
@@ -179,6 +191,9 @@ Engine_Retina : CroneEngine {
     this.addCommand("delayAmp", "f", {|msg|
       sDelay.set(\amp, msg[1]);
     });
+    this.addCommand("oscMix", "f", {|msg|
+      bOscMix.set(msg[1]);
+    });
     this.addCommand("destroy", "f", {|msg|
       sTrembler.set(\destroy, msg[1]);
     });
@@ -192,6 +207,9 @@ Engine_Retina : CroneEngine {
     sTrig.free;
     sDelay.free;
     sMonitor.free;
+    bCarrier.free;
+    bDelay.free;
+    bOscMix.free;
   }
 
 } 

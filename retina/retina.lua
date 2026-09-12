@@ -14,6 +14,7 @@ function init()
 
   BGUtil.addEngineControlParam(params, { id = "amp" })
   BGUtil.addEngineControlParam(params, { id = "speed", min = 1, max = 2.5 })
+  BGUtil.addEngineControlParam(params, { id = "oscMix", min = 0.001, max = 0.2, warp = 'exp' })
   BGUtil.addEngineControlParam(params, {
     id = "delayAmp",
     action = function(x)
@@ -38,6 +39,7 @@ function init()
   MPD218 = BGMidi.newInputMappingMPD218({
     [3] = 'speed',
     [9] = 'delayAmp',
+    [12] = 'oscMix',
     [13] = 'destroy',
     [14] = 'sidechainMonitor', -- custom monitor synth
     [15] = 'amp',
