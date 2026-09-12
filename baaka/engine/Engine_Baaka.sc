@@ -28,18 +28,22 @@ Engine_Baaka : CroneEngine {
     ).add;
     
     SynthDef.new(\baakaSeq,
-      { arg inL, inR, out, seqFreq = 10.0, oscFreq = 110.0, amp = 1;
+      { arg inL, inR, out, seqFreq = 3.0, oscFreq = 110.0, modScale = 1, amp = 1;
         var in = [In.ar(inL), In.ar(inR)];
         var mult = Demand.kr(
           trig: Impulse.kr(seqFreq),
           reset: 0,
-          demandUGens: Dseq.new([0, 1, 2, 3, 4, 5], inf)
+          demandUGens: Dseq.new(Array.series(6,0,1), inf)
         );
         var voice = DiodeRingMod.ar(
           car: in * amp,
-          mod: SinOsc.ar(oscFreq * mult)
+          mod: SinOsc.ar(oscFreq * mult, mul: modScale)
         );
-        Out.ar(out, voice.dup);
+        var snd = [
+          voice,
+          DelayC.ar(voice, 0.1, 0.01 * mult),
+        ];
+        Out.ar(out, snd);
       }
     ).add;
     
@@ -90,6 +94,9 @@ Engine_Baaka : CroneEngine {
     });
     this.addCommand("seqFreq", "f", {|msg|
       sModulate.set(\seqFreq, msg[1]);
+    });
+    this.addCommand("seqModScale", "f", {|msg|
+      sModulate.set(\modScale, msg[1]);
     });
     this.addCommand("oscFreq", "f", {|msg|
       sModulate.set(\oscFreq, msg[1]);

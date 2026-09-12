@@ -23,6 +23,7 @@ function init()
   BGUtil.addEngineControlParam(params, { id = "noiseFreq", min = 1000, max = 18000, warp = 'exp' })
   BGUtil.addEngineControlParam(params, { id = "seqFreq", min = 3, max = 51 })
   BGUtil.addEngineControlParam(params, { id = "oscFreq", min = 110, max = 440, warp = 'exp' })
+  BGUtil.addEngineControlParam(params, { id = "seqModScale", min = 1, max = 8, warp = 'exp' })
   BGUtil.addEngineControlParam(params, { id = "bend" })
   -- BGUtil.addEngineControlParam(params, { id = "amp" })
   
@@ -32,7 +33,7 @@ function init()
   end)
   
   MPD218 = BGMidi.newInputMappingMPD218({
-    [3] = 'bend',
+    [3] = 'seqModScale',
     [9] = 'oscFreq',
     [12] = 'mix',
     [13] = 'noiseFreq',
