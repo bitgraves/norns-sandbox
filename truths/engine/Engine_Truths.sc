@@ -101,7 +101,7 @@ Engine_Truths : CroneEngine {
     ).add;
 
     SynthDef.new(\pgPad,
-      { arg buf = 0, outBus = 0, rate = 1, amp = 0,
+      { arg buf = 0, outBus = 0, amp = 0,
             root = 59,        // B3
             decay = 6.0,
             rezMix = 0,        // 0 = dry loop, 1 = resonators only
@@ -110,7 +110,7 @@ Engine_Truths : CroneEngine {
 
         env = EnvGen.kr(Env.asr(0.05, 1, 0.3), gate, doneAction: 2);
 
-        src = PlayBuf.ar(2, buf, BufRateScale.kr(buf) * rate, loop: 1) * 0.5;
+        src = PlayBuf.ar(2, buf, BufRateScale.kr(buf) * SinOsc.kr(0.08, mul: 0.015, add: 1), loop: 1) * 0.5;
 
         exc = LeakDC.ar(src);
         exc = HPF.ar(exc, 60);
