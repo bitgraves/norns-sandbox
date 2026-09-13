@@ -40,7 +40,7 @@ Engine_Retina : CroneEngine {
       { arg outBus = 0, gate = 1, buf = 0, index = 1;
         // var snd = PlayBuf.ar(2, buf, BufRateScale.kr(buf) * SinOsc.kr(0.08, mul: 0.008, add: 1), loop: 1) * -3.dbamp;
         
-        var trigFreq = \speed.kr(0).linlin(0, 1, 0.5, 2);
+        var trigFreq = Rand(0.5, 2); // \speed.kr(0).linlin(0, 1, 0.5, 2);
   
         var segment = \segment.kr(0.04);
         var sweepFreq = (BufDur.ir(buf) * segment).reciprocal * trigFreq;
@@ -57,7 +57,7 @@ Engine_Retina : CroneEngine {
         snd = snd.sum;
         snd = FreqShift.ar(snd, 100 * index);
         snd = HPF.ar(snd, 120);
-        snd = snd * 5.dbamp;
+        snd = snd * 6.dbamp;
         
         Out.ar(outBus, snd);
       }
@@ -87,7 +87,7 @@ Engine_Retina : CroneEngine {
       }
     ).add;
 
-    // TODO: this is a clone of \retChordShape but with different pitch shift indices
+    // this is a partial clone of \retChordShape but with different pitch shift indices
     SynthDef.new(\retChordShapeOct,
       { arg inBus = 2, outBus = 0, gate = 1, index = 0;
         var in = In.ar(inBus, 1);
@@ -108,11 +108,12 @@ Engine_Retina : CroneEngine {
       { arg inBus = 2, outBus = 0, delayBus, gateBus, amp = 1, destroy = 1, envDepth = 0;
         var in = In.ar(inBus, 1);
         var gate = In.kr(gateBus, 1);
+        var envDepthMod = SinOsc.kr(0.05, add: envDepth, mul: envDepth * 0.03);
         var env = EnvGen.kr(
           Env.adsr(0.03, 0.002, 1, 0.03),
           gate,
-          levelScale: envDepth,
-          levelBias: 1.0 - envDepth,
+          levelScale: envDepthMod,
+          levelBias: 1.0 - envDepthMod,
         );
         var snd = in;
         snd = HPF.ar(snd, 1000.0);
@@ -120,8 +121,11 @@ Engine_Retina : CroneEngine {
           snd,
           shift: destroy
         );
+        snd = snd * 5.dbamp;
         snd = snd * amp * env;
-        Out.ar(outBus, [snd, DelayC.ar(snd, delaytime: 0.01)]);
+        snd = Pan2.ar(snd, SinOsc.kr(0.2, mul: 1.0 - envDepth));
+        snd = [snd[0], DelayC.ar(snd[1], delaytime: 0.01)];
+        Out.ar(outBus, snd);
         Out.ar(delayBus, snd);
       }
     ).add;
@@ -224,7 +228,6 @@ Engine_Retina : CroneEngine {
     });
     this.addCommand("noteOff", "i", {|msg|
       var index = msg[1];
-      "note gate set off: %".format(index).postln;
       notes[index].set(\gate, 0);
     });
     this.addCommand("amp", "f", {|msg|
